@@ -1,0 +1,11 @@
+-Doracle.mds.cache=simple 
+-Dlog4j.configurationFile=/opt/glassfish5/glassfish/domains/domain1/applications/Spectra_WS/WEB-INF/lib/log4j2.properties
+
+
+// I set the below VM parameters in glassfish
+// For logging all Soap Web Services Responses/Requests
+System.setProperty("com.sun.xml.ws.transport.http.client.HttpTransportPipe.dump", "true");
+System.setProperty("com.sun.xml.internal.ws.transport.http.client.HttpTransportPipe.dump", "true");
+System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
+System.setProperty("com.sun.xml.internal.ws.transport.http.HttpAdapter.dump", "true");
+System.setProperty("com.sun.xml.internal.ws.transport.http.HttpAdapter.dumpTreshold", "999999");
