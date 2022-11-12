@@ -739,7 +739,7 @@ public class Help_Func
 	{
 		/**
 		 * Blacklisted for Submission Hierarchies 1.
-		 * 1. Wind_FTTX->OltElementName=×××××->OltRackNo=×××××->OltSubRackNo=×××××->OltSlot=×××××->OltPort=×××××->Onu=×××××
+		 * 1. Wind_FTTX->OltElementName->OltRackNo->OltSubRackNo->OltSlot=->OltPort->Onu
 		 * 2. FTTC_Location_Element->SiteName=AKADIMIAS
 		 */
 		ArrayList<String> hierarchyBlackList1 = new ArrayList<String>();
