@@ -5,17 +5,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
-import java.util.ArrayList;
 
 // Notice, do not import com.mysql.cj.jdbc.*
 // or you will have problems!
-public class novaStaticDBConnection
+public class TnovaDynamicDBConnection
 {
 	Connection conn = null;
 
 	// Define a static logger variable so that it references the
 	// Logger instance named "DB_Connection".
-	Logger logger = LogManager.getLogger(novaStaticDBConnection.class);
+	Logger logger = LogManager.getLogger(TnovaDynamicDBConnection.class);
 
 	public Connection connect()
 			throws InvalidInputException, InstantiationException, IllegalAccessException, ClassNotFoundException
@@ -23,21 +22,22 @@ public class novaStaticDBConnection
 		System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl");
 		try
 		{
-			novaStaticDataSource smds = new novaStaticDataSource();
-			conn = smds.getConnection();
+//			TnovaDynamicDataSource smds = new TnovaDynamicDataSource();
+//			conn = smds.getConnection();
+			conn = TnovaDynamicDataSource.ds.getConnection();
+
 			if (conn != null)
 			{
-				logger.debug("DB Connection with Nova Static database established!");
+				logger.debug("DB Connection with Nova Dynamic database established!");
 			} else
 			{
-				logger.fatal("Could not open connection with Nova Static database!");
+				logger.fatal("Could not open connection with Nova Dynamic database!");
 			}
 
 		} catch (Exception ex)
 		{
-			conn = null;
-			throw new InvalidInputException("DB Connection Error", "Could not connect to database with Nova Static database!");
-
+			return null;
+//			throw new InvalidInputException("DB Connection Error", "Could not connect to Nova Dynamic database!");
 		}
 		return conn;
 
@@ -56,13 +56,13 @@ public class novaStaticDBConnection
 
 	public void closeDBConnection() throws Exception
 	{
-		logger.debug("Closing DB Connection with Nova Static Database");
+		logger.debug("Closing DB Connection with Nova Dynamic Database");
 		try
 		{
 			conn.close();
 		} catch (Exception ex)
 		{
-			logger.fatal("Could not open connection with Nova Static database!");
+			logger.fatal("Could not open connection with Nova Dynamic Database !");
 		}
 	}
 }

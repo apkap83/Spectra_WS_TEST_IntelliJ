@@ -11,16 +11,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class novaStaticDBOperations
+public class TnovaStaticDBOperations
 {
 	// Logger instance
-	Logger logger = LogManager.getLogger(novaStaticDBOperations.class.getName());
+	Logger logger = LogManager.getLogger(TnovaStaticDBOperations.class.getName());
 
 	Connection conn;
 	Statement stmt = null;
 	ResultSet rs = null;
 
-	public novaStaticDBOperations(Connection conn)
+	public TnovaStaticDBOperations(Connection conn)
 	{
 		this.conn = conn;
 	}

@@ -10,16 +10,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class novaDynamicDBOperations implements Interface_DB_Operations
+public class TnovaDynamicDBOperations implements Interface_DB_Operations
 {
 	// Logger instance
-	private final Logger logger = LogManager.getLogger(novaDynamicDBOperations.class.getName());
+	private final Logger logger = LogManager.getLogger(TnovaDynamicDBOperations.class.getName());
 
 	Connection conn;
 	Statement stmt = null;
 	ResultSet rs = null;
 
-	public novaDynamicDBOperations(Connection conn)
+	public TnovaDynamicDBOperations(Connection conn)
 	{
 		this.conn = conn;
 	}

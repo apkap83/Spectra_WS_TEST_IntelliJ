@@ -17,7 +17,6 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 
 import gr.wind.spectra.business.*;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,13 +70,13 @@ public class WebSpectra implements InterfaceWebSpectra
 
 		// Addition for Nova Connection towards Static Database
 		Connection novaStaticCon = null;
-		novaStaticDBConnection novaStaticConObj = null;
-		novaStaticDBOperations novaStaticDBOper = null;
+		TnovaStaticDBConnection novaStaticConObj = null;
+		TnovaStaticDBOperations novaStaticDBOper = null;
 
 		// Addition for Nova Connection towards Dynamic Database
 		Connection novaDynCon = null;
-		novaDynamicDBConnection novaDynConObj = null;
-		novaDynamicDBOperations novaDynDBOper = null;
+		TnovaDynamicDBConnection novaDynConObj = null;
+		TnovaDynamicDBOperations novaDynDBOper = null;
 
 		MessageContext mc = null;
 		HttpServletRequest req = null;
@@ -115,9 +114,11 @@ public class WebSpectra implements InterfaceWebSpectra
 		{
 			try
 			{
-				novaStaticConObj = new novaStaticDBConnection();
+				novaStaticConObj = new TnovaStaticDBConnection();
 				novaStaticCon = novaStaticConObj.connect();
-				novaStaticDBOper = new novaStaticDBOperations(novaStaticCon);
+				if (novaStaticConObj != null) {
+					novaStaticDBOper = new TnovaStaticDBOperations(novaStaticCon);
+				}
 			} catch (Exception ex)
 			{
 				logger.fatal("Could not open connection with Nova Static database!");
@@ -129,9 +130,11 @@ public class WebSpectra implements InterfaceWebSpectra
 		{
 			try
 			{
-				novaDynConObj = new novaDynamicDBConnection();
+				novaDynConObj = new TnovaDynamicDBConnection();
 				novaDynCon = novaDynConObj.connect();
-				novaDynDBOper = new novaDynamicDBOperations(novaDynCon);
+				if (novaDynConObj != null) {
+					novaDynDBOper = new TnovaDynamicDBOperations(novaDynCon);
+				}
 			} catch (Exception ex)
 			{
 				logger.fatal("Could not open connection with database!");
@@ -151,7 +154,7 @@ public class WebSpectra implements InterfaceWebSpectra
 		try
 		{
 			Help_Func hf = new Help_Func();
-			Interface_DB_Operations dbOps;
+			Interface_DB_Operations dbOps = null;
 			String novaTableNamePrefix = "Nova_";
 
 			// Those 2 directives is for IP retrieval of web request
@@ -200,9 +203,11 @@ public class WebSpectra implements InterfaceWebSpectra
 				ElementsList = dbs.getOneColumnUniqueResultSet(DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
 						new String[] {}, new String[] {}, new String[] {});
 
-				NovaElementsList = novaDynDBOper.getOneColumnUniqueResultSet(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
-						new String[] {}, new String[] {}, new String[] {});
-
+				// Check if Nova DB is Up
+				if (novaDynCon != null) {
+					NovaElementsList = novaDynDBOper.getOneColumnUniqueResultSet(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
+							new String[]{}, new String[]{}, new String[]{});
+				}
 				// Add in the list for WIND root elements the list for Nova Elements in the same array
 				ElementsList.addAll(NovaElementsList);
 
@@ -224,7 +229,10 @@ public class WebSpectra implements InterfaceWebSpectra
 
 				// if root Element hierarchy starts with Nova_ then use db operations of Nova...
 				if (rootElementInHierarchy.startsWith(novaTableNamePrefix)) {
-					dbOps = novaDynDBOper;
+					// Check if Nova DB is Up
+					if (novaDynCon != null) {
+						dbOps = novaDynDBOper;
+					}
 				} else {
 					 dbOps = dbs;
 					 // Remove Table name Prefix for Wind Tables
@@ -297,6 +305,18 @@ public class WebSpectra implements InterfaceWebSpectra
 					prodElementsList.add(pr);
 				} else
 				{
+					// if root Element hierarchy starts with Nova_ then use db operations of Nova...
+					if (rootElementInHierarchy.startsWith(novaTableNamePrefix)) {
+						// Check if Nova DB is Up
+						if (novaDynCon != null) {
+							dbOps = novaDynDBOper;
+						}
+					} else {
+						dbOps = dbs;
+						// Remove Table name Prefix for Wind Tables
+						novaTableNamePrefix = "";
+					}
+
 					// Check if Max hierarchy is used
 					// FTTX->OltElementName=LAROAKDMOLT01->OltSlot=1->OltPort=0->Onu=0->ElementName=LAROAKDMOFLND010H11->Slot=4:
 					// 7 MAX = FTTX + OltElementName->OltSlot->OltPort->Onu->ElementName->Slot
