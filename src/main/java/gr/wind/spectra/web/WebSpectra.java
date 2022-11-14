@@ -118,6 +118,9 @@ public class WebSpectra implements InterfaceWebSpectra
 				novaStaticCon = novaStaticConObj.connect();
 				if (novaStaticConObj != null) {
 					novaStaticDBOper = new TnovaStaticDBOperations(novaStaticCon);
+				} else {
+					// Try to reconnect to data source...
+					new TnovaStaticDataSource();
 				}
 			} catch (Exception ex)
 			{
@@ -134,6 +137,9 @@ public class WebSpectra implements InterfaceWebSpectra
 				novaDynCon = novaDynConObj.connect();
 				if (novaDynConObj != null) {
 					novaDynDBOper = new TnovaDynamicDBOperations(novaDynCon);
+				} else {
+					// Try to reconnect to data source...
+					new TnovaDynamicDataSource();
 				}
 			} catch (Exception ex)
 			{
@@ -150,11 +156,11 @@ public class WebSpectra implements InterfaceWebSpectra
 		 * unique CLIs from Voice Resource path
 		 */
 
-		new WebSpectra();
+		Interface_DB_Operations dbOps = null;
 		try
 		{
 			Help_Func hf = new Help_Func();
-			Interface_DB_Operations dbOps = null;
+
 			String novaTableNamePrefix = "Nova_";
 
 			// Those 2 directives is for IP retrieval of web request
@@ -387,16 +393,19 @@ public class WebSpectra implements InterfaceWebSpectra
 			throw e;
 		} finally
 		{
-			// Send Similar request to Spectra_Reporting server
-			try
+			// Send Similar request to Spectra_Reporting server ONLY for WIND requests
+			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations"))
 			{
-				Async_GetHierarchy aGH = new Async_GetHierarchy(UserName, Password, RequestID, RequestTimestamp,
-						SystemID, UserID, Hierarchy);
-				aGH.run();
-			} catch (Exception e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try
+				{
+					Async_GetHierarchy aGH = new Async_GetHierarchy(UserName, Password, RequestID, RequestTimestamp,
+							SystemID, UserID, Hierarchy);
+					aGH.run();
+				} catch (Exception e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 			try

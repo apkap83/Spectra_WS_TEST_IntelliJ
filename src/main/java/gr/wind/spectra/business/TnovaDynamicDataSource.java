@@ -23,6 +23,8 @@ public class TnovaDynamicDataSource
 
 	static
 	{
+		Logger logger2 = LogManager.getLogger(TnovaStaticDataSource.class);
+
 		// Resource is obtained from file:
 		// /opt/glassfish5/glassfish/domains/domain1/lib/classes/database.properties
 
@@ -35,31 +37,23 @@ public class TnovaDynamicDataSource
 		config.setUsername(USERNAME1);
 		config.setPassword(PASSWORD1);
 		config.setMaxLifetime(600000);
-		config.setConnectionTimeout(300);
+		config.setConnectionTimeout(260);
 		config.setValidationTimeout(250);
 		config.setMaximumPoolSize(10);
 		config.addDataSourceProperty("cachePrepStmts", "true");
 		config.addDataSourceProperty("prepStmtCacheSize", "700");
 		config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-
 		config.addDataSourceProperty("useServerPrepStmts", "true");
-		ds = new HikariDataSource(config);
+
+		try {
+			ds = new HikariDataSource(config);
+		}catch (Exception e){
+			logger2.fatal("Cannot start Hikari DataSource for Nova");
+		}
 	}
 
 	public TnovaDynamicDataSource()
 	{
 	}
 
-	public Connection getConnection() throws Exception
-	{
-		Connection con = null;
-		try
-		{
-			con = ds.getConnection();
-		} catch (Exception ex)
-		{
-			logger.fatal("Could not open connection with database!");
-		}
-		return con;
-	}
 }
