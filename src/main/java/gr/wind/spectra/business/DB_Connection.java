@@ -34,23 +34,9 @@ public class DB_Connection
 
 		try
 		{
-			Help_Func hf = new Help_Func();
-			/**
-			 * Direct Connection to MySQL
-			 */
-			/*
-			 * Class.forName("com.mysql.cj.jdbc.Driver").newInstance(); conn =
-			 * DriverManager.getConnection(DATABASE_URL + "user=" + USERNAME + "&" +
-			 * "password=" + PASSWORD + "&" +
-			 * "useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Athens&autoReconnect=true"
-			 * );
-			 */
-
-			// Using HikariCP - MyDataSource Class (fastest Java JDBC datasource!)
-
 			MyDataSource mds = new MyDataSource();
 
-			if (hf.PropertiesDBFileModified())
+			if (Help_Func.PropertiesDBFileModified())
 			{
 				mds.getUpdatedResourceData();
 			}

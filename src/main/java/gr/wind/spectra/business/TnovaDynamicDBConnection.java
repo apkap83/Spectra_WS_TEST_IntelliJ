@@ -22,8 +22,13 @@ public class TnovaDynamicDBConnection
 		System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl");
 		try
 		{
-//			TnovaDynamicDataSource smds = new TnovaDynamicDataSource();
-//			conn = smds.getConnection();
+			// Check if we have a fresh dynamic database
+			if (Help_Func.NovaPropertiesDBFileModified())
+			{
+				System.out.println("Apostolis");
+				TnovaDynamicDataSource.getUpdatedResourceData();
+			}
+
 			conn = TnovaDynamicDataSource.ds.getConnection();
 
 			if (conn != null)
@@ -37,10 +42,8 @@ public class TnovaDynamicDBConnection
 		} catch (Exception ex)
 		{
 			return null;
-//			throw new InvalidInputException("DB Connection Error", "Could not connect to Nova Dynamic database!");
 		}
 		return conn;
-
 	}
 
 	public boolean isActive() throws Exception
