@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class TnovaDynamicDBOperations implements Interface_DB_Operations
+public class TnovaDynamicDBOperations implements iDB_Operations
 {
 	// Logger instance
 	private final Logger logger = LogManager.getLogger(TnovaDynamicDBOperations.class.getName());

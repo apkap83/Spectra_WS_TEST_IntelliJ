@@ -57,7 +57,6 @@ public class TnovaDynamicDataSource
 
 	public static void getUpdatedResourceData()
 	{
-		System.out.println("Kapetanios");
 		Logger logger2 = LogManager.getLogger(TnovaDynamicDataSource.class);
 
 		// Resource is obtained from file:
@@ -87,7 +86,8 @@ public class TnovaDynamicDataSource
 			System.out.println("**** New NOVA DATABASE_URL = " + DATABASE_URL2);
 			ds = new HikariDataSource(config);
 		}catch (Exception e){
-			logger2.fatal("Cannot connect to Hikari Dynamic DataSource for Nova!!");
+			logger2.fatal("Cannot connect to Hikari Dynamic DataSource for Nova!!" + e.getMessage());
+			e.printStackTrace();
 		}
 
 	}

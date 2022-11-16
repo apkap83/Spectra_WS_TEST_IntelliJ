@@ -7,9 +7,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import gr.wind.spectra.business.DB_Operations;
 import gr.wind.spectra.business.Help_Func;
-import gr.wind.spectra.business.Interface_DB_Operations;
+import gr.wind.spectra.business.iDB_Operations;
 import gr.wind.spectra.web.InvalidInputException;
 
 @XmlRootElement(name = "Element")
@@ -44,9 +43,9 @@ public class ProductOfGetHierarchy
 	// fullVoiceSubsHierarchyFromDBSplit, Hierarchy, fullHierarchyFromDBSplit[0] ,
 	// ElementsList, nodeNames, nodeValues, RequestID);
 
-	public ProductOfGetHierarchy(Interface_DB_Operations dbs, String[] hierarchyFullPathList, String[] fullDataHierarchyPath,
-								 String[] fullVoiceHierarchyPath, String hierarchyProvided, String type, List<String> items,
-								 String[] nodeNames, String[] nodeValues, String requestID, String WSAffected)
+	public ProductOfGetHierarchy(iDB_Operations dbs, String[] hierarchyFullPathList, String[] fullDataHierarchyPath,
+                                 String[] fullVoiceHierarchyPath, String hierarchyProvided, String type, List<String> items,
+                                 String[] nodeNames, String[] nodeValues, String requestID, String WSAffected)
 			throws SQLException, InvalidInputException
 	{
 

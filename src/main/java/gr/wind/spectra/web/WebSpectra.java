@@ -156,7 +156,7 @@ public class WebSpectra implements InterfaceWebSpectra
 		 * unique CLIs from Voice Resource path
 		 */
 
-		Interface_DB_Operations dbOps = null;
+		iDB_Operations dbOps = null;
 		try
 		{
 			Help_Func hf = new Help_Func();

@@ -25,7 +25,6 @@ public class TnovaDynamicDBConnection
 			// Check if we have a fresh dynamic database
 			if (Help_Func.NovaPropertiesDBFileModified())
 			{
-				System.out.println("Apostolis");
 				TnovaDynamicDataSource.getUpdatedResourceData();
 			}
 
@@ -41,6 +40,7 @@ public class TnovaDynamicDBConnection
 
 		} catch (Exception ex)
 		{
+			ex.printStackTrace();
 			return null;
 		}
 		return conn;

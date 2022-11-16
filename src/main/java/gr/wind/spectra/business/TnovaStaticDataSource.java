@@ -46,7 +46,8 @@ public class TnovaStaticDataSource
 		try {
 			ds = new HikariDataSource(config);
 		}catch (Exception e){
-			logger2.fatal("Cannot start Hikari DataSource for Nova");
+			logger2.fatal("Cannot start Hikari Static DataSource for Nova" + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 

@@ -21,7 +21,7 @@ import org.apache.logging.log4j.Logger;
 
 import gr.wind.spectra.web.InvalidInputException;
 
-public class DB_Operations implements Interface_DB_Operations {
+public class DB_Operations implements iDB_Operations {
 	// Logger instance
 	private final Logger logger = LogManager.getLogger(gr.wind.spectra.business.DB_Operations.class.getName());
 

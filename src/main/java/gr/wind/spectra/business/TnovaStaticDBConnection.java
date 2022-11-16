@@ -35,6 +35,7 @@ public class TnovaStaticDBConnection
 
 		} catch (Exception ex)
 		{
+			ex.printStackTrace();
 			return null;
 //			throw new InvalidInputException("DB Connection Error", "Could not connect to database with Nova Static database!");
 
