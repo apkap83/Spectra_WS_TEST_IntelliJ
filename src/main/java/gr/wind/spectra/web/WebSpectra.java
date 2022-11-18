@@ -161,7 +161,9 @@ public class WebSpectra implements InterfaceWebSpectra
 		{
 			Help_Func hf = new Help_Func();
 
-			String novaTableNamePrefix = "Nova_";
+			String tablePrefix = "";
+			final String windTableNamePrefix = "";
+			final String novaTableNamePrefix = "Nova_";
 
 			// Those 2 directives is for IP retrieval of web request
 			mc = wsContext.getMessageContext();
@@ -238,21 +240,22 @@ public class WebSpectra implements InterfaceWebSpectra
 					// Check if Nova DB is Up
 					if (novaDynCon != null) {
 						dbOps = novaDynDBOper;
+						tablePrefix = novaTableNamePrefix;
 					}
 				} else {
 					 dbOps = dbs;
 					 // Remove Table name Prefix for Wind Tables
-					novaTableNamePrefix = "";
+					tablePrefix = windTableNamePrefix;
 				}
 
 				// Get Hierarchy Table for that root hierarchy
-				String table = dbOps.getOneValue(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableName",
+				String table = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableName",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElementInHierarchy },
 						new String[] { "String" });
 
 				// Get Hierarchy data in style :
 				// OltElementName->OltSlot->OltPort->Onu->ElementName->Slot
-				String fullHierarchyFromDB = dbOps.getOneValue(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableNamePath",
+				String fullHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableNamePath",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElementInHierarchy },
 						new String[] { "String" });
 
@@ -265,7 +268,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 				// Get Full Data hierarchy in style :
 				// OltElementName->OltSlot->OltPort->Onu->ActiveElement->Slot
-				String fullDataSubsHierarchyFromDB = dbOps.getOneValue(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
+				String fullDataSubsHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
 						"DataSubscribersTableNamePath", new String[] { "RootHierarchyNode" },
 						new String[] { rootElementInHierarchy }, new String[] { "String" });
 
@@ -274,7 +277,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 				// Get Full Voice hierarchy in style :
 				// OltElementName->OltSlot->OltPort->Onu->ActiveElement->Slot
-				String fullVoiceSubsHierarchyFromDB = dbOps.getOneValue(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
+				String fullVoiceSubsHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
 						"VoiceSubscribersTableNamePath", new String[] { "RootHierarchyNode" },
 						new String[] { rootElementInHierarchy }, new String[] { "String" });
 
@@ -311,18 +314,6 @@ public class WebSpectra implements InterfaceWebSpectra
 					prodElementsList.add(pr);
 				} else
 				{
-					// if root Element hierarchy starts with Nova_ then use db operations of Nova...
-					if (rootElementInHierarchy.startsWith(novaTableNamePrefix)) {
-						// Check if Nova DB is Up
-						if (novaDynCon != null) {
-							dbOps = novaDynDBOper;
-						}
-					} else {
-						dbOps = dbs;
-						// Remove Table name Prefix for Wind Tables
-						novaTableNamePrefix = "";
-					}
-
 					// Check if Max hierarchy is used
 					// FTTX->OltElementName=LAROAKDMOLT01->OltSlot=1->OltPort=0->Onu=0->ElementName=LAROAKDMOFLND010H11->Slot=4:
 					// 7 MAX = FTTX + OltElementName->OltSlot->OltPort->Onu->ElementName->Slot
