@@ -32,8 +32,9 @@ public class Help_Func
 		return sdf.format(cal.getTime());
 	}
 
-	public boolean PropertiesDBFileModified() throws IOException
+	public static boolean PropertiesDBFileModified() throws IOException
 	{
+		Logger logger2 = LogManager.getLogger(gr.wind.spectra.business.Help_Func.class.getName());
 		// Properties file
 		File databasePropertiesFile = new File(
 				"/opt/glassfish5/glassfish/domains/domain1/lib/classes/test_database.properties");
@@ -75,9 +76,70 @@ public class Help_Func
 			//System.out.println("modTimeWritten = " + modTimeWritten);
 			//System.out.println("TRUE");
 			//  Update modification time that is written in file
-			logger.info("Database properties files was modified!");
+			logger2.info("Database properties files was modified!");
 			BufferedWriter writer = new BufferedWriter(new FileWriter(
 					"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_database_ForTestEnv.properties"));
+			try
+			{
+				writer.write(modTimeOfPropertiesFile);
+				writer.close();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+
+			return true;
+		}
+
+	}
+
+	public static boolean NovaPropertiesDBFileModified() throws IOException
+	{
+		Logger logger2 = LogManager.getLogger(gr.wind.spectra.business.Help_Func.class.getName());
+		// Properties file
+		File databasePropertiesFile = new File(
+				"/opt/glassfish5/glassfish/domains/domain1/lib/classes/nova_dynamic_database.properties");
+
+		// Its modification time
+		long modTimeOfPropertiesFile_LongFormat = databasePropertiesFile.lastModified();
+		String modTimeOfPropertiesFile = String.valueOf(modTimeOfPropertiesFile_LongFormat);
+
+		String modTimeWritten = "";
+		// File that contains the latest mod time
+		File file = new File(
+				"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB_ForTestEnv.properties");
+		Scanner sc = null;
+		try
+		{
+			sc = new Scanner(file);
+		} catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+
+		while (sc.hasNextLine())
+		{
+			modTimeWritten = sc.nextLine();
+		}
+
+		modTimeWritten = modTimeWritten.replace("\n", "").replace("\r", "");
+
+		// Mod time is the same
+		if (modTimeOfPropertiesFile.equals(modTimeWritten))
+		{
+			//System.out.println("modTimeOfPropertiesFile = " + modTimeOfPropertiesFile);
+			//System.out.println("modTimeWritten = " + modTimeWritten);
+			//System.out.println("FALSE");
+			return false;
+		} else // Mod time is different!
+		{
+			//System.out.println("modTimeOfPropertiesFile = " + modTimeOfPropertiesFile);
+			//System.out.println("modTimeWritten = " + modTimeWritten);
+			//System.out.println("TRUE");
+			//  Update modification time that is written in file
+			logger2.info("Nova Dynamic Database properties files was modified!");
+			BufferedWriter writer = new BufferedWriter(new FileWriter(
+					"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB_ForTestEnv.properties"));
 			try
 			{
 				writer.write(modTimeOfPropertiesFile);
@@ -730,7 +792,7 @@ public class Help_Func
 	 * Checks if hierarchyGiven start with: Cabinet_Code or Wind_FTTX or
 	 * FTTC_Location_Element
 	 *
-	 * @param hierarchyGiven
+	 * @param
 	 * @return
 	 */
 
@@ -739,7 +801,7 @@ public class Help_Func
 	{
 		/**
 		 * Blacklisted for Submission Hierarchies 1.
-		 * 1. Wind_FTTX->OltElementName=×××××->OltRackNo=×××××->OltSubRackNo=×××××->OltSlot=×××××->OltPort=×××××->Onu=×××××
+		 * 1. Wind_FTTX->OltElementName->OltRackNo->OltSubRackNo->OltSlot=->OltPort->Onu
 		 * 2. FTTC_Location_Element->SiteName=AKADIMIAS
 		 */
 		ArrayList<String> hierarchyBlackList1 = new ArrayList<String>();

@@ -1,0 +1,54 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GlassFish 5.0.01" type="GlassfishConfiguration" factoryName="Remote" APPLICATION_SERVER_NAME="GlassFish 5.0.01" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
+    <option name="HOST" value="10.10.18.120" />
+    <option name="PORT" value="4848" />
+    <option name="LOCAL" value="false" />
+    <option name="OPEN_IN_BROWSER" value="false" />
+    <option name="UPDATING_POLICY" value="hot-swap-classes" />
+    <deployment>
+      <artifact name="Spectra_WS_TEST:war">
+        <settings />
+      </artifact>
+    </deployment>
+    <server-settings>
+      <data>
+        <option name="adminServerHost" value="" />
+        <option name="clusterName" value="" />
+        <option name="credentialAlias" value="e14c84b8-49c0-4cac-a838-f2608bfa32f3" />
+        <option name="preserve" value="true" />
+        <option name="secured" value="true" />
+        <option name="stagingRemotePath" value="" />
+        <option name="transportHostId" />
+        <option name="transportStagingTarget">
+          <TransportTarget>
+            <option name="id" value="8d6f5bcd-ab80-447b-b877-fc7b3238f2d4" />
+            <id>8d6f5bcd-ab80-447b-b877-fc7b3238f2d4</id>
+          </TransportTarget>
+        </option>
+        <credential-alias>e14c84b8-49c0-4cac-a838-f2608bfa32f3</credential-alias>
+        <preserve>true</preserve>
+        <secured>true</secured>
+        <admin-server-host />
+        <cluster-name />
+        <transport-target>
+          <TransportTarget>
+            <option name="id" value="8d6f5bcd-ab80-447b-b877-fc7b3238f2d4" />
+            <id>8d6f5bcd-ab80-447b-b877-fc7b3238f2d4</id>
+          </TransportTarget>
+        </transport-target>
+        <staging-path />
+      </data>
+    </server-settings>
+    <predefined_log_file enabled="true" id="GlassFish" />
+    <RunnerSettings RunnerId="Debug">
+      <option name="DEBUG_PORT" value="56649" />
+      <option name="LOCAL" value="false" />
+    </RunnerSettings>
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="package" />
+      <option name="BuildArtifacts" enabled="true">
+        <artifact name="Spectra_WS_TEST:war" />
+      </option>
+    </method>
+  </configuration>
+</component>

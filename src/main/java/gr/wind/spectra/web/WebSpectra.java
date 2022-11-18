@@ -3,11 +3,7 @@ package gr.wind.spectra.web;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Resource;
 import javax.jws.WebMethod;
@@ -20,17 +16,10 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 
+import gr.wind.spectra.business.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import gr.wind.spectra.business.DB_Connection;
-import gr.wind.spectra.business.DB_Operations;
-import gr.wind.spectra.business.Help_Func;
-import gr.wind.spectra.business.IncidentOutageToCSV;
-import gr.wind.spectra.business.OpenningIncidentOutageToCSV;
-import gr.wind.spectra.business.Test_CLIOutage;
-import gr.wind.spectra.business.s_DB_Connection;
-import gr.wind.spectra.business.s_DB_Operations;
 import gr.wind.spectra.consumerRequests.Async_CloseOutage;
 import gr.wind.spectra.consumerRequests.Async_GetHierarchy;
 import gr.wind.spectra.consumerRequests.Async_ModifyOutage;
@@ -70,12 +59,25 @@ public class WebSpectra implements InterfaceWebSpectra
 
 		Logger logger = LogManager.getLogger(gr.wind.spectra.web.WebSpectra.class.getName());
 		String hierSep = "->";
+
 		Connection conn = null;
 		DB_Connection conObj = null;
 		DB_Operations dbs = null;
+
 		Connection s_conn = null;
 		s_DB_Connection s_conObj = null;
 		s_DB_Operations s_dbs = null;
+
+		// Addition for Nova Connection towards Static Database
+		Connection novaStaticCon = null;
+		TnovaStaticDBConnection novaStaticConObj = null;
+		TnovaStaticDBOperations novaStaticDBOper = null;
+
+		// Addition for Nova Connection towards Dynamic Database
+		Connection novaDynCon = null;
+		TnovaDynamicDBConnection novaDynConObj = null;
+		TnovaDynamicDBOperations novaDynDBOper = null;
+
 		MessageContext mc = null;
 		HttpServletRequest req = null;
 		//System.out.println("Client IP = " + req.getRemoteAddr());
@@ -108,6 +110,44 @@ public class WebSpectra implements InterfaceWebSpectra
 			}
 		}
 
+		if (novaStaticCon == null)
+		{
+			try
+			{
+				novaStaticConObj = new TnovaStaticDBConnection();
+				novaStaticCon = novaStaticConObj.connect();
+				if (novaStaticConObj != null) {
+					novaStaticDBOper = new TnovaStaticDBOperations(novaStaticCon);
+				} else {
+					// Try to reconnect to data source...
+					new TnovaStaticDataSource();
+				}
+			} catch (Exception ex)
+			{
+				logger.fatal("Could not open connection with Nova Static database!");
+				throw new Exception(ex.getMessage());
+			}
+		}
+
+		if (novaDynCon == null)
+		{
+			try
+			{
+				novaDynConObj = new TnovaDynamicDBConnection();
+				novaDynCon = novaDynConObj.connect();
+				if (novaDynConObj != null) {
+					novaDynDBOper = new TnovaDynamicDBOperations(novaDynCon);
+				} else {
+					// Try to reconnect to data source...
+					new TnovaDynamicDataSource();
+				}
+			} catch (Exception ex)
+			{
+				logger.fatal("Could not open connection with database!");
+				throw new Exception(ex.getMessage());
+			}
+		}
+
 		/*
 		 * <DataCustomersAffected>34</potentialCustomersAffected>// unique user names
 		 * from Data Resource path
@@ -116,10 +156,14 @@ public class WebSpectra implements InterfaceWebSpectra
 		 * unique CLIs from Voice Resource path
 		 */
 
-		new WebSpectra();
+		iDB_Operations dbOps = null;
 		try
 		{
 			Help_Func hf = new Help_Func();
+
+			String tablePrefix = "";
+			final String windTableNamePrefix = "";
+			final String novaTableNamePrefix = "Nova_";
 
 			// Those 2 directives is for IP retrieval of web request
 			mc = wsContext.getMessageContext();
@@ -131,6 +175,8 @@ public class WebSpectra implements InterfaceWebSpectra
 			logger.trace(
 					req.getRemoteAddr() + " - ReqID: " + RequestID + " - Get Hierarchy: Establishing DB Connection");
 			List<String> ElementsList = new ArrayList<String>();
+			List<String> NovaElementsList = new ArrayList<String>();
+			List<String> WindAndNovaElementsList = new ArrayList<String>();
 			List<ProductOfGetHierarchy> prodElementsList = new ArrayList<>();
 
 			// Check if Authentication credentials are correct.
@@ -162,8 +208,16 @@ public class WebSpectra implements InterfaceWebSpectra
 				logger.trace(req.getRemoteAddr() + " - ReqID: " + RequestID
 						+ " - Get Hierarchy: Hierarchy Requested: <empty>");
 
-				ElementsList = dbs.getOneColumnUniqueResultSet("HierarchyTablePerTechnology2", "RootHierarchyNode",
+				ElementsList = dbs.getOneColumnUniqueResultSet(DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
 						new String[] {}, new String[] {}, new String[] {});
+
+				// Check if Nova DB is Up
+				if (novaDynCon != null) {
+					NovaElementsList = novaDynDBOper.getOneColumnUniqueResultSet(novaTableNamePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
+							new String[]{}, new String[]{}, new String[]{});
+				}
+				// Add in the list for WIND root elements the list for Nova Elements in the same array
+				ElementsList.addAll(NovaElementsList);
 
 				String[] nodeNames = new String[] {};
 				String[] nodeValues = new String[] {};
@@ -181,14 +235,27 @@ public class WebSpectra implements InterfaceWebSpectra
 				// Get root hierarchy String
 				String rootElementInHierarchy = hf.getRootHierarchyNode(Hierarchy);
 
+				// if root Element hierarchy starts with Nova_ then use db operations of Nova...
+				if (rootElementInHierarchy.startsWith(novaTableNamePrefix)) {
+					// Check if Nova DB is Up
+					if (novaDynCon != null) {
+						dbOps = novaDynDBOper;
+						tablePrefix = novaTableNamePrefix;
+					}
+				} else {
+					 dbOps = dbs;
+					 // Remove Table name Prefix for Wind Tables
+					tablePrefix = windTableNamePrefix;
+				}
+
 				// Get Hierarchy Table for that root hierarchy
-				String table = dbs.getOneValue("HierarchyTablePerTechnology2", "HierarchyTableName",
+				String table = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableName",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElementInHierarchy },
 						new String[] { "String" });
 
 				// Get Hierarchy data in style :
 				// OltElementName->OltSlot->OltPort->Onu->ElementName->Slot
-				String fullHierarchyFromDB = dbs.getOneValue("HierarchyTablePerTechnology2", "HierarchyTableNamePath",
+				String fullHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(), "HierarchyTableNamePath",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElementInHierarchy },
 						new String[] { "String" });
 
@@ -201,7 +268,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 				// Get Full Data hierarchy in style :
 				// OltElementName->OltSlot->OltPort->Onu->ActiveElement->Slot
-				String fullDataSubsHierarchyFromDB = dbs.getOneValue("HierarchyTablePerTechnology2",
+				String fullDataSubsHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
 						"DataSubscribersTableNamePath", new String[] { "RootHierarchyNode" },
 						new String[] { rootElementInHierarchy }, new String[] { "String" });
 
@@ -210,7 +277,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 				// Get Full Voice hierarchy in style :
 				// OltElementName->OltSlot->OltPort->Onu->ActiveElement->Slot
-				String fullVoiceSubsHierarchyFromDB = dbs.getOneValue("HierarchyTablePerTechnology2",
+				String fullVoiceSubsHierarchyFromDB = dbOps.getOneValue(tablePrefix + DBTable.HierarchyTablePerTechnology2.toString(),
 						"VoiceSubscribersTableNamePath", new String[] { "RootHierarchyNode" },
 						new String[] { rootElementInHierarchy }, new String[] { "String" });
 
@@ -234,16 +301,16 @@ public class WebSpectra implements InterfaceWebSpectra
 					// ElementsList = dbs.GetOneColumnUniqueResultSet(table,
 					// fullHierarchyFromDBSplit[0], " 1 = 1 ");
 
-					ElementsList = dbs.getOneColumnUniqueResultSet(table, fullHierarchyFromDBSplit[0], new String[] {},
+					ElementsList = dbOps.getOneColumnUniqueResultSet(table, fullHierarchyFromDBSplit[0], new String[] {},
 							new String[] {}, new String[] {});
 
 					String[] nodeNames = new String[] { rootElementInHierarchy };
 					String[] nodeValues = new String[] { "1" };
 
-					ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbs, fullHierarchyFromDBSplit,
+					ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbOps, fullHierarchyFromDBSplit,
 							fullDataSubsHierarchyFromDBSplit, fullVoiceSubsHierarchyFromDBSplit, Hierarchy,
 							fullHierarchyFromDBSplit[0], ElementsList, nodeNames, nodeValues, RequestID,
-							dbs.determineWSAffected(Hierarchy));
+							dbOps.determineWSAffected(Hierarchy));
 					prodElementsList.add(pr);
 				} else
 				{
@@ -271,19 +338,19 @@ public class WebSpectra implements InterfaceWebSpectra
 						// fullHierarchyFromDBSplit[hierItemsGiven.length - 1],
 						// Help_Func.HierarchyToPredicate(Hierarchy));
 
-						ElementsList = dbs.getOneColumnUniqueResultSet(table,
+						ElementsList = dbOps.getOneColumnUniqueResultSet(table,
 								fullHierarchyFromDBSplit[hierItemsGiven.length - 1], hf.hierarchyKeys(Hierarchy),
 								hf.hierarchyValues(Hierarchy), hf.hierarchyStringTypes(Hierarchy));
 
 						String[] nodeNames = nodeNamesArrayList.toArray(new String[nodeNamesArrayList.size()]);
 						String[] nodeValues = nodeValuesArrayList.toArray(new String[nodeValuesArrayList.size()]);
-						ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbs, fullHierarchyFromDBSplit,
+						ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbOps, fullHierarchyFromDBSplit,
 								fullDataSubsHierarchyFromDBSplit, fullVoiceSubsHierarchyFromDBSplit, Hierarchy,
 								fullHierarchyFromDBSplit[hierItemsGiven.length - 1], ElementsList, nodeNames,
-								nodeValues, RequestID, dbs.determineWSAffected(Hierarchy));
+								nodeValues, RequestID, dbOps.determineWSAffected(Hierarchy));
 						prodElementsList.add(pr);
 					} else
-					{ // Max Hierarchy Level
+					{   // Max Hierarchy Level
 						// If a full hierarchy is given
 						for (int i = 0; i < hierItemsGiven.length; i++)
 						{
@@ -302,10 +369,10 @@ public class WebSpectra implements InterfaceWebSpectra
 						ElementsList = new ArrayList<String>();
 						String[] nodeNames = nodeNamesArrayList.toArray(new String[nodeNamesArrayList.size()]);
 						String[] nodeValues = nodeValuesArrayList.toArray(new String[nodeValuesArrayList.size()]);
-						ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbs, fullHierarchyFromDBSplit,
+						ProductOfGetHierarchy pr = new ProductOfGetHierarchy(dbOps, fullHierarchyFromDBSplit,
 								fullDataSubsHierarchyFromDBSplit, fullVoiceSubsHierarchyFromDBSplit, Hierarchy,
 								"MaxLevel", ElementsList, nodeNames, nodeValues, RequestID,
-								dbs.determineWSAffected(Hierarchy));
+								dbOps.determineWSAffected(Hierarchy));
 						prodElementsList.add(pr);
 					}
 				}
@@ -317,16 +384,19 @@ public class WebSpectra implements InterfaceWebSpectra
 			throw e;
 		} finally
 		{
-			// Send Similar request to Spectra_Reporting server
-			try
+			// Send Similar request to Spectra_Reporting server ONLY for WIND requests
+			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations"))
 			{
-				Async_GetHierarchy aGH = new Async_GetHierarchy(UserName, Password, RequestID, RequestTimestamp,
-						SystemID, UserID, Hierarchy);
-				aGH.run();
-			} catch (Exception e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try
+				{
+					Async_GetHierarchy aGH = new Async_GetHierarchy(UserName, Password, RequestID, RequestTimestamp,
+							SystemID, UserID, Hierarchy);
+					aGH.run();
+				} catch (Exception e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 			try
@@ -341,12 +411,31 @@ public class WebSpectra implements InterfaceWebSpectra
 				{
 					s_conObj.closeDBConnection();
 				}
+
+				if (novaStaticConObj != null)
+				{
+					novaStaticConObj.closeDBConnection();
+				}
+
+				if (novaDynConObj != null)
+				{
+					novaDynConObj.closeDBConnection();
+				}
+
+				// Close connections regarding WIND DB
 				conn = null;
 				conObj = null;
 				dbs = null;
 				s_conn = null;
 				s_conObj = null;
 				s_dbs = null;
+
+				// Close connections regarding Nova DB
+				novaStaticCon=null;
+				novaDynCon=null;
+				novaStaticDBOper=null;
+				novaDynDBOper=null;
+
 				mc = null;
 				req = null;
 
@@ -521,8 +610,8 @@ public class WebSpectra implements InterfaceWebSpectra
 			String[] servicesAffected = AffectedServices.split("\\|");
 
 			/**
-			 * 	•	Exception 1 : RootHierarchyNode = Wind_FTTX , HierarchyTableNamePath : 'OltElementName->OltSlot->OltPort->Onu
-			 *	•	Exception 2 : RootHierarchyNode = FTTC_Location_Element , HierarchyTableNamePath : Site Name
+			 * 	ï¿½	Exception 1 : RootHierarchyNode = Wind_FTTX , HierarchyTableNamePath : 'OltElementName->OltSlot->OltPort->Onu
+			 *	ï¿½	Exception 2 : RootHierarchyNode = FTTC_Location_Element , HierarchyTableNamePath : Site Name
 			 */
 			hf.declineSubmissionOnCertainHierarchyLevels(myHier);
 

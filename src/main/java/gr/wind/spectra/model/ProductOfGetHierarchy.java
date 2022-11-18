@@ -7,8 +7,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import gr.wind.spectra.business.DB_Operations;
 import gr.wind.spectra.business.Help_Func;
+import gr.wind.spectra.business.iDB_Operations;
 import gr.wind.spectra.web.InvalidInputException;
 
 @XmlRootElement(name = "Element")
@@ -33,6 +33,8 @@ public class ProductOfGetHierarchy
 	private String[] hierarchyFullPathList;
 	private String[] hierElements;
 
+	private static String novaTableNamePrefix = "Nova_";
+
 	// Empty constructor requirement of JAXB (Java Architecture for XML Binding)
 	public ProductOfGetHierarchy()
 	{
@@ -41,9 +43,9 @@ public class ProductOfGetHierarchy
 	// fullVoiceSubsHierarchyFromDBSplit, Hierarchy, fullHierarchyFromDBSplit[0] ,
 	// ElementsList, nodeNames, nodeValues, RequestID);
 
-	public ProductOfGetHierarchy(DB_Operations dbs, String[] hierarchyFullPathList, String[] fullDataHierarchyPath,
-			String[] fullVoiceHierarchyPath, String hierarchyProvided, String type, List<String> items,
-			String[] nodeNames, String[] nodeValues, String requestID, String WSAffected)
+	public ProductOfGetHierarchy(iDB_Operations dbs, String[] hierarchyFullPathList, String[] fullDataHierarchyPath,
+                                 String[] fullVoiceHierarchyPath, String hierarchyProvided, String type, List<String> items,
+                                 String[] nodeNames, String[] nodeValues, String requestID, String WSAffected)
 			throws SQLException, InvalidInputException
 	{
 
@@ -75,22 +77,29 @@ public class ProductOfGetHierarchy
 			// FTTX->OltElementName
 			if (this.hierElements.length > 1)
 			{
+				// Determine if db connection is towards WInd or Nova database
+				if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")){
+					novaTableNamePrefix = "";
+				} else {
+					novaTableNamePrefix = "Nova_";
+				}
+
 				// Get Root element from hierarchy
 				String rootElement = hf.getRootHierarchyNode(this.hierarchyProvided);
 
 				// Firstly determine the hierarchy table that will be used based on the root
 				// hierarchy provided
-				String dataSubsTable = dbs.getOneValue("HierarchyTablePerTechnology2", "DataSubscribersTableName",
+				String dataSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "DataSubscribersTableName",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
 
-				String voiceSubsTable = dbs.getOneValue("HierarchyTablePerTechnology2", "VoiceSubscribersTableName",
+				String voiceSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "VoiceSubscribersTableName",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
 
-				String IPTVSubsTable = dbs.getOneValue("HierarchyTablePerTechnology2", "IPTVSubscribersTableName",
+				String IPTVSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "IPTVSubscribersTableName",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
 
 				// Secondly determine NGA_TYPE based on rootElement
-				String ngaTypes = dbs.getOneValue("HierarchyTablePerTechnology2", "NGA_TYPE",
+				String ngaTypes = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "NGA_TYPE",
 						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
 
 				// Calculate data Customers Affected but replace column names in order to
