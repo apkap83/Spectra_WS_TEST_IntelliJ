@@ -107,7 +107,7 @@ public class Help_Func
 		String modTimeWritten = "";
 		// File that contains the latest mod time
 		File file = new File(
-				"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB_ForTestEnv.properties");
+				"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB.properties");
 		Scanner sc = null;
 		try
 		{
@@ -139,7 +139,7 @@ public class Help_Func
 			//  Update modification time that is written in file
 			logger2.info("Nova Dynamic Database properties files was modified!");
 			BufferedWriter writer = new BufferedWriter(new FileWriter(
-					"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB_ForTestEnv.properties"));
+					"/opt/glassfish5/glassfish/domains/domain1/logs/ModificationTimeFor_NOVA_DynamicDB.properties"));
 			try
 			{
 				writer.write(modTimeOfPropertiesFile);
