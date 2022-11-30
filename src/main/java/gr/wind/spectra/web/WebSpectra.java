@@ -200,14 +200,17 @@ public class WebSpectra implements InterfaceWebSpectra
 				hf.validateDateTimeFormat("RequestTimestamp", RequestTimestamp);
 			}
 
-			// Update Statistics
-			s_dbs.updateUsageStatisticsForMethod("GetHierarchy");
-
 			// No Hierarchy is given - returns root elements
 			if (Hierarchy == null || Hierarchy.equals("") || Hierarchy.equals("?"))
 			{
 				logger.trace(req.getRemoteAddr() + " - ReqID: " + RequestID
 						+ " - Get Hierarchy: Hierarchy Requested: <empty>");
+
+				// Update Statistics for Wind
+				s_dbs.updateUsageStatisticsForMethod("GetHierarchy");
+
+				// Update Statistics for Nova
+				novaStaticDBOper.updateUsageStatisticsForMethod("GetHierarchy");
 
 				ElementsList = dbs.getOneColumnUniqueResultSet(DBTable.HierarchyTablePerTechnology2.toString(), "RootHierarchyNode",
 						new String[] {}, new String[] {}, new String[] {});
@@ -240,11 +243,17 @@ public class WebSpectra implements InterfaceWebSpectra
 				if (rootElementInHierarchy.startsWith(novaTableNamePrefix)) {
 					// Check if Nova DB is Up
 					if (novaDynCon != null) {
+						// Update Statistics for Nova
+						novaStaticDBOper.updateUsageStatisticsForMethod("GetHierarchy");
+						
 						dbOps = novaDynDBOper;
 						// Change Table name Prefix for Nova Tables
 						tablePrefix = novaTableNamePrefix;
 					}
 				} else {
+					// Update Statistics for Wind
+					s_dbs.updateUsageStatisticsForMethod("GetHierarchy");
+
 					 dbOps = dbs;
 					 // Change Table name Prefix for Wind Tables
 					tablePrefix = windTableNamePrefix;
