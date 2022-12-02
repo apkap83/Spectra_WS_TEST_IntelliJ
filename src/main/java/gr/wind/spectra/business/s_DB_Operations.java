@@ -18,8 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import gr.wind.spectra.web.InvalidInputException;
 
-public class s_DB_Operations
-{
+public class s_DB_Operations implements iStatic_DB_Operations {
 	// Logger instance
 	Logger logger = LogManager.getLogger(gr.wind.spectra.business.s_DB_Operations.class.getName());
 
@@ -32,6 +31,7 @@ public class s_DB_Operations
 		this.conn = conn;
 	}
 
+	@Override
 	public boolean checkIfStringExistsInSpecificColumn(String table, String columnName, String searchValue)
 			throws SQLException
 	{
@@ -57,6 +57,7 @@ public class s_DB_Operations
 		return found;
 	}
 
+	@Override
 	public void updateUsageStatisticsForMethod(String methodName) throws SQLException, ParseException
 	{
 		// Get Date and Time and create a pattern of time representation
@@ -80,6 +81,7 @@ public class s_DB_Operations
 
 	}
 
+	@Override
 	public boolean insertValuesInTable(String table, String[] columnNames, String[] columnValues, String[] types)
 			throws SQLException
 	{
@@ -132,6 +134,7 @@ public class s_DB_Operations
 		return statusOfOperation;
 	}
 
+	@Override
 	public int getMaxIntegerValue(String table, String columnName) throws SQLException
 	{
 		int returnValue = 0;
@@ -149,8 +152,9 @@ public class s_DB_Operations
 		return returnValue;
 	}
 
+	@Override
 	public boolean checkIfCriteriaExists(String table, String[] predicateKeys, String[] predicateValues,
-			String[] predicateTypes) throws SQLException
+										 String[] predicateTypes) throws SQLException
 	{
 		boolean criteriaIfExists = false;
 		Help_Func hf = new Help_Func();
@@ -188,8 +192,9 @@ public class s_DB_Operations
 		return criteriaIfExists;
 	}
 
+	@Override
 	public String getOneValue(String table, String columnName, String[] predicateKeys, String[] predicateValues,
-			String[] predicateTypes) throws SQLException
+							  String[] predicateTypes) throws SQLException
 	{
 		String output;
 		Help_Func hf = new Help_Func();
@@ -223,8 +228,9 @@ public class s_DB_Operations
 		return output;
 	}
 
+	@Override
 	public List<String> getOneColumnUniqueResultSet(String table, String columnName, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes) throws SQLException
+													String[] predicateValues, String[] predicateTypes) throws SQLException
 	{
 		// Example: select DISTINCT ID from table where a = 2 and b = 3
 		Help_Func hf = new Help_Func();
@@ -277,8 +283,9 @@ public class s_DB_Operations
 		return myList;
 	}
 
+	@Override
 	public int updateValuesBasedOnLastInsertID(String table, String setColumnName, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes) throws SQLException
+											   String[] predicateValues, String[] predicateTypes) throws SQLException
 	{
 
 		Help_Func hf = new Help_Func();
@@ -312,8 +319,9 @@ public class s_DB_Operations
 
 	}
 
+	@Override
 	public int updateValuesForOneColumn(String table, String setColumnName, String newValue, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes) throws SQLException
+										String[] predicateValues, String[] predicateTypes) throws SQLException
 	{
 		Help_Func hf = new Help_Func();
 		// Example: update TestTable set `Name` = 100 where Surname = "Kapetanios";
@@ -345,8 +353,9 @@ public class s_DB_Operations
 
 	}
 
+	@Override
 	public String numberOfRowsFound(String table, String[] predicateKeys, String[] predicateValues,
-			String[] predicateTypes) throws SQLException
+									String[] predicateTypes) throws SQLException
 	{
 		int numOfRows = 0;
 		Help_Func hf = new Help_Func();
@@ -378,8 +387,9 @@ public class s_DB_Operations
 		return Integer.toString(numOfRows);
 	}
 
+	@Override
 	public String countDistinctRowsForSpecificColumn(String table, String column, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes) throws SQLException
+													 String[] predicateValues, String[] predicateTypes) throws SQLException
 	{
 		Help_Func hf = new Help_Func();
 
@@ -419,8 +429,9 @@ public class s_DB_Operations
 	 *
 	 */
 
+	@Override
 	public String countDistinctRowsForSpecificColumns(String table, String[] columns, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes) throws SQLException
+													  String[] predicateValues, String[] predicateTypes) throws SQLException
 	{
 		Help_Func hf = new Help_Func();
 
@@ -464,8 +475,9 @@ public class s_DB_Operations
 		return numOfRows;
 	}
 
+	@Override
 	public ResultSet getRows(String table, String[] columnNames, String[] predicateKeys, String[] predicateValues,
-			String[] predicateTypes) throws SQLException
+							 String[] predicateTypes) throws SQLException
 	{
 		Help_Func hf = new Help_Func();
 
@@ -491,6 +503,7 @@ public class s_DB_Operations
 		return rs;
 	}
 
+	@Override
 	public boolean authenticateRequest(String userName, String password, String serviceName) throws SQLException
 	{
 		boolean found = false;
@@ -542,8 +555,9 @@ public class s_DB_Operations
 		return found;
 	}
 
+	@Override
 	public String maxNumberOfCustomersAffected(String table, String SumOfColumn, String[] predicateColumns,
-			String[] predicateValues) throws SQLException
+											   String[] predicateValues) throws SQLException
 	{
 		Help_Func hf = new Help_Func();
 
@@ -568,9 +582,10 @@ public class s_DB_Operations
 		return numOfRows;
 	}
 
+	@Override
 	public int updateColumnOnSpecificCriteria(String tableName, String[] columnNamesForUpdate,
-			String[] columnValuesForUpdate, String[] setColumnDataTypes, String[] predicateColumns,
-			String[] predicateValues, String[] predicateColumnsDataTypes) throws SQLException, InvalidInputException
+											  String[] columnValuesForUpdate, String[] setColumnDataTypes, String[] predicateColumns,
+											  String[] predicateValues, String[] predicateColumnsDataTypes) throws SQLException, InvalidInputException
 	{
 		Help_Func hf = new Help_Func();
 		int numOfRowsUpdated = 0;

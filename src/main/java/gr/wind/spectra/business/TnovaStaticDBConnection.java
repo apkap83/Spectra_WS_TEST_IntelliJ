@@ -8,15 +8,15 @@ import java.sql.Connection;
 
 // Notice, do not import com.mysql.cj.jdbc.*
 // or you will have problems!
-public class TnovaStaticDBConnection
-{
+public class TnovaStaticDBConnection implements iStaticDBConnection {
 	Connection conn = null;
 
 	// Define a static logger variable so that it references the
 	// Logger instance named "DB_Connection".
 	Logger logger = LogManager.getLogger(TnovaStaticDBConnection.class);
 
-	public Connection connect()
+	@Override
+    public Connection connect()
 			throws InvalidInputException, InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
 		System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl");
@@ -44,7 +44,8 @@ public class TnovaStaticDBConnection
 
 	}
 
-	public boolean isActive() throws Exception
+	@Override
+    public boolean isActive() throws Exception
 	{
 		if (conn.isValid(10))
 		{
@@ -55,7 +56,8 @@ public class TnovaStaticDBConnection
 		}
 	}
 
-	public void closeDBConnection() throws Exception
+	@Override
+    public void closeDBConnection() throws Exception
 	{
 		logger.debug("Closing DB Connection with Nova Static Database");
 		try

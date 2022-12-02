@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TnovaStaticDBOperations
+public class TnovaStaticDBOperations implements iStatic_DB_Operations
 {
 	// Logger instance
 	Logger logger = LogManager.getLogger(TnovaStaticDBOperations.class.getName());
@@ -487,7 +487,7 @@ public class TnovaStaticDBOperations
 	public boolean authenticateRequest(String userName, String password, String serviceName) throws SQLException
 	{
 		boolean found = false;
-		String table = "WSAccounts";
+		String table = "Nova_WSAccounts";
 		String sqlString = "SELECT * FROM `" + table + "` WHERE `UserName` = ? AND `Service` = ?";
 		logger.trace(sqlString);
 		PreparedStatement pst = conn.prepareStatement(sqlString);

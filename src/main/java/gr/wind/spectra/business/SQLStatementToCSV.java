@@ -1,6 +1,7 @@
 package gr.wind.spectra.business;
 
 import java.io.FileWriter;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,16 +17,16 @@ public class SQLStatementToCSV extends Thread
 {
 	// Define a static logger variable so that it references the
 	// Logger instance named "DB_Connection".
-	Logger logger = LogManager.getLogger(gr.wind.spectra.business.SQLStatementToCSV.class);
+	Logger logger = LogManager.getLogger(SQLStatementToCSV.class);
 
-	private DB_Connection conObj;
+	private iDynamicDBConnection conObj;
 	private Connection conn;
 
 	private Connection s_conn;
-	private s_DB_Connection s_conObj;
-	private s_DB_Operations s_dbs;
+	private iStaticDBConnection s_conObj;
+	private iStatic_DB_Operations s_dbs;
 
-	private String exportedFileName;
+	private Path exportedFileName;
 	private String[] predicateKeys;
 	private String[] predicateValues;
 	private String[] predicateTypes;
@@ -33,9 +34,10 @@ public class SQLStatementToCSV extends Thread
 
 	private String[] columnsForExport;
 	String sqlQuery;
+	private String tablePrefix;
 
-	public SQLStatementToCSV(String exportedFileName, String table, String[] columnsForExport, String[] predicateKeys,
-			String[] predicateValues, String[] predicateTypes, String ngaTypes)
+	public SQLStatementToCSV(Path exportedFileName, String table, String[] columnsForExport, String[] predicateKeys,
+							 String[] predicateValues, String[] predicateTypes, String ngaTypes)
 	{
 		this.exportedFileName = exportedFileName;
 		this.columnsForExport = columnsForExport;
@@ -66,34 +68,67 @@ public class SQLStatementToCSV extends Thread
 
 	public void establishDBConnection() throws Exception
 	{
-		try
-		{
-			this.conObj = new DB_Connection();
-			this.conn = this.conObj.connect();
-			//			this.dbs = new DB_Operations(conn);
-		} catch (Exception ex)
-		{
-			throw new Exception(ex.getMessage());
+		if (!exportedFileName.toString().contains("Nova_")) {
+			try
+			{
+				tablePrefix = "";
+				this.conObj = new DB_Connection();
+				this.conn = this.conObj.connect();
+				//			this.dbs = new DB_Operations(conn);
+			} catch (Exception ex)
+			{
+				logger.fatal("Could not open connection with Wind Dynamic database!");
+				throw new Exception(ex.getMessage());
+			}
+		} else {
+			try
+			{
+				tablePrefix = "Nova_";
+				this.conObj = new TnovaDynamicDBConnection();
+				this.conn = this.conObj.connect();
+				//			this.dbs = new DB_Operations(conn);
+			} catch (Exception ex)
+			{
+				logger.fatal("Could not open connection with Nova Dynamic database!");
+				throw new Exception(ex.getMessage());
+			}
 		}
+
 	}
 
 	public void establishStaticTablesDBConnection() throws Exception
 	{
 		//System.out.println("Client IP = " + req.getRemoteAddr());
 
-		if (s_conn == null)
-		{
+		if (!exportedFileName.toString().contains("Nova_")) {
+			if (s_conn == null)
+			{
+				try
+				{
+					tablePrefix = "";
+					this.s_conObj = new s_DB_Connection();
+					this.s_conn = this.s_conObj.connect();
+					this.s_dbs = new s_DB_Operations(s_conn);
+				} catch (Exception ex)
+				{
+					logger.fatal("Could not open connection with Wind static database!");
+					throw new Exception(ex.getMessage());
+				}
+			}
+		} else {
 			try
 			{
-				this.s_conObj = new s_DB_Connection();
+				tablePrefix = "Nova_";
+				this.s_conObj = new TnovaStaticDBConnection();
 				this.s_conn = this.s_conObj.connect();
-				this.s_dbs = new s_DB_Operations(s_conn);
+				this.s_dbs = new TnovaStaticDBOperations(s_conn);
 			} catch (Exception ex)
 			{
-				logger.fatal("Could not open connection with database!");
+				logger.fatal("Could not open connection with Nova Static database!");
 				throw new Exception(ex.getMessage());
 			}
 		}
+
 	}
 
 	@Override
@@ -125,7 +160,7 @@ public class SQLStatementToCSV extends Thread
 			}
 
 			ResultSet rs = pst.executeQuery();
-			CSVWriter csvWriter = new CSVWriter(new FileWriter(exportedFileName), ',');
+			CSVWriter csvWriter = new CSVWriter(new FileWriter(exportedFileName.toString()), ',');
 			csvWriter.writeAll(rs, false);
 			csvWriter.close();
 
@@ -185,7 +220,7 @@ public class SQLStatementToCSV extends Thread
 				{
 					// System.out.println("columnsForExport[6] = " + columnsForExport[6]);
 					// Insert Values in Database
-					s_dbs.insertValuesInTable("Test_ClosedOutages_AffectedCLIs",
+					s_dbs.insertValuesInTable(tablePrefix + "Test_ClosedOutages_AffectedCLIs",
 							new String[] { "CliValue", "OutageID", "IncidentStatus", "IncidentID", "Scheduled",
 									"StartTime", "EndTime", "AffectedService", "Impact", "Priority",
 									"HierarchySelected", "Location" },

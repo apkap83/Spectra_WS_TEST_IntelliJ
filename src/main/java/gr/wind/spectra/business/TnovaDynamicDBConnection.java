@@ -8,14 +8,14 @@ import java.sql.Connection;
 
 // Notice, do not import com.mysql.cj.jdbc.*
 // or you will have problems!
-public class TnovaDynamicDBConnection
-{
+public class TnovaDynamicDBConnection implements iDynamicDBConnection {
 	Connection conn = null;
 
 	// Define a static logger variable so that it references the
 	// Logger instance named "DB_Connection".
 	Logger logger = LogManager.getLogger(TnovaDynamicDBConnection.class);
 
+	@Override
 	public Connection connect()
 			throws InvalidInputException, InstantiationException, IllegalAccessException, ClassNotFoundException
 	{
@@ -46,6 +46,7 @@ public class TnovaDynamicDBConnection
 		return conn;
 	}
 
+	@Override
 	public boolean isActive() throws Exception
 	{
 		if (conn.isValid(0))
@@ -57,6 +58,7 @@ public class TnovaDynamicDBConnection
 		}
 	}
 
+	@Override
 	public void closeDBConnection() throws Exception
 	{
 		logger.debug("Closing DB Connection with Nova Dynamic Database");

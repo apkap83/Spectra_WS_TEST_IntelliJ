@@ -11,7 +11,7 @@ import gr.wind.spectra.web.InvalidInputException;
 
 // Notice, do not import com.mysql.cj.jdbc.*
 // or you will have problems!
-public class s_DB_Connection
+public class s_DB_Connection implements iStaticDBConnection
 {
 	java.sql.Connection conn = null;
 

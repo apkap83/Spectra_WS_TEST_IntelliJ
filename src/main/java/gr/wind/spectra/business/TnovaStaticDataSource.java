@@ -37,7 +37,7 @@ public class TnovaStaticDataSource
 		config.setMaxLifetime(600000);
 		config.setConnectionTimeout(260);
 		config.setValidationTimeout(250);
-		config.setMaximumPoolSize(10);
+		config.setMaximumPoolSize(2);
 		config.addDataSourceProperty("cachePrepStmts", "true");
 		config.addDataSourceProperty("prepStmtCacheSize", "700");
 		config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
