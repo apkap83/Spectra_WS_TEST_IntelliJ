@@ -4,13 +4,16 @@ import java.sql.SQLException;
 
 public class Update_ReallyAffectedTable extends Thread
 {
-	s_DB_Operations s_dbs;
+	iStatic_DB_Operations s_dbs;
 	String foundIncidentID;
 	String allAffectedServices;
 	String foundScheduled;
 	String CLIProvided;
+	private String tablePrefix;
+	private final String windTableNamePrefix = "";
+	private final String novaTableNamePrefix = "Nova_";
 
-	public Update_ReallyAffectedTable(s_DB_Operations s_dbs, String foundIncidentID, String allAffectedServices,
+	public Update_ReallyAffectedTable(iStatic_DB_Operations s_dbs, String foundIncidentID, String allAffectedServices,
 			String foundScheduled, String CLIProvided)
 	{
 		this.s_dbs = s_dbs;
@@ -19,6 +22,13 @@ public class Update_ReallyAffectedTable extends Thread
 		this.foundScheduled = foundScheduled;
 		this.CLIProvided = CLIProvided;
 
+		// Check if Export is for Nova or Wind
+		if (s_dbs.getClass().toString().equals("class gr.wind.spectra.business.s_DB_Operations")) {
+			this.tablePrefix = windTableNamePrefix;
+		} else if (s_dbs.getClass().toString().equals("class gr.wind.spectra.business.TnovaStaticDBOperations")) {
+			this.tablePrefix = novaTableNamePrefix;
+
+		}
 	}
 
 	@Override
@@ -30,14 +40,14 @@ public class Update_ReallyAffectedTable extends Thread
 		// Check if we have at least one OPEN incident
 		try
 		{
-			numOfTimesCliCalledForIncident = s_dbs.numberOfRowsFound("Test_Stats_Pos_NLU_Requests",
+			numOfTimesCliCalledForIncident = s_dbs.numberOfRowsFound(tablePrefix + "Test_Stats_Pos_NLU_Requests",
 					new String[] { "IncidentID", "CliValue" }, new String[] { foundIncidentID, CLIProvided },
 					new String[] { "String", "String" });
 
 			// If CLI has not called again then insert line
 			if (numOfTimesCliCalledForIncident.equals("0"))
 			{
-				s_dbs.insertValuesInTable("Test_Stats_Pos_NLU_Requests",
+				s_dbs.insertValuesInTable(tablePrefix + "Test_Stats_Pos_NLU_Requests",
 						new String[] { "IncidentID", "AffectedService", "Scheduled", "CliValue" },
 						new String[] { foundIncidentID, allAffectedServices, foundScheduled, CLIProvided },
 						new String[] { "String", "String", "String", "String", "String" });
@@ -46,7 +56,7 @@ public class Update_ReallyAffectedTable extends Thread
 			else
 			{
 				// Update value using LAST_INSERT_ID method of MySQL e.g. SET ModifyOutage = LAST_INSERT_ID(ModifyOutage+1)
-				s_dbs.updateValuesBasedOnLastInsertID("Test_Stats_Pos_NLU_Requests", "TimesCalled",
+				s_dbs.updateValuesBasedOnLastInsertID(tablePrefix + "Test_Stats_Pos_NLU_Requests", "TimesCalled",
 						new String[] { "IncidentID", "CliValue" }, new String[] { foundIncidentID, CLIProvided },
 						new String[] { "String", "String" });
 

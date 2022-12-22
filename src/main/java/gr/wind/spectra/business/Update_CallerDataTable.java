@@ -8,8 +8,8 @@ import gr.wind.spectra.cdrdbconsumer.WebCDRDBService;
 
 public class Update_CallerDataTable extends Thread
 {
-	DB_Operations dbs;
-	s_DB_Operations s_dbs;
+	iDB_Operations dbs;
+	iStatic_DB_Operations s_dbs;
 	String CLIProvided;
 	String IncidentID;
 	String allAffectedServices;
@@ -18,8 +18,11 @@ public class Update_CallerDataTable extends Thread
 	String backupEligible;
 	String requestID;
 	String systemID;
+	private String tablePrefix;
+	private final String windTableNamePrefix = "";
+	private final String novaTableNamePrefix = "Nova_";
 
-	public Update_CallerDataTable(DB_Operations dbs, s_DB_Operations s_dbs, String CLIProvided, String IncidentID,
+	public Update_CallerDataTable(iDB_Operations dbs, iStatic_DB_Operations s_dbs, String CLIProvided, String IncidentID,
 			String allAffectedServices, String foundScheduled, String message, String backupEligible, String requestID,
 			String systemID)
 	{
@@ -33,6 +36,14 @@ public class Update_CallerDataTable extends Thread
 		this.backupEligible = backupEligible;
 		this.requestID = requestID;
 		this.systemID = systemID;
+
+		// Check if Export is for Nova or Wind
+		if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
+			this.tablePrefix = windTableNamePrefix;
+		} else if (dbs.getClass().toString().equals("class gr.wind.spectra.business.TnovaDynamicDBOperations")) {
+			this.tablePrefix = novaTableNamePrefix;
+
+		}
 	}
 
 	@Override
@@ -48,7 +59,7 @@ public class Update_CallerDataTable extends Thread
 			//		"CliValue", CLIProvided);
 
 			// Get number of rows
-			String numOfRowsFound = dbs.numberOfRowsFound("Prov_Internet_Resource_Path", new String[] { "CliValue" },
+			String numOfRowsFound = dbs.numberOfRowsFound(tablePrefix + "Prov_Internet_Resource_Path", new String[] { "CliValue" },
 					new String[] { CLIProvided }, new String[] { "String" });
 
 			if (Integer.parseInt(numOfRowsFound) > 0) // CLI was found in Internet_Resource_Path
@@ -56,7 +67,7 @@ public class Update_CallerDataTable extends Thread
 				ResultSet rs = null;
 
 				// Get Lines from Internet Resource Path
-				rs = dbs.getRows("Prov_Internet_Resource_Path",
+				rs = dbs.getRows(tablePrefix + "Prov_Internet_Resource_Path",
 						new String[] { "NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService",
 								"PoP_Name", "PoP_Code", "OltElementName", "OltRackNo", "OltSubRackNo", "OltSlot",
 								"OltPort", "Onu", "KvCode", "CabinetCode", "ActiveElement", "Rack", "Subrack", "Slot",
@@ -238,10 +249,10 @@ public class Update_CallerDataTable extends Thread
 
 					if (!Username.equals("")) // Only if user name is not empty
 					{
-						CSSCOLLECTIONNAME = dbs.getOneValue("AAA21_NMAP", "CSSCOLLECTIONNAME",
+						CSSCOLLECTIONNAME = dbs.getOneValue(tablePrefix + "AAA21_NMAP", "CSSCOLLECTIONNAME",
 								new String[] { "USERNAME" }, new String[] { Username }, new String[] { "String" });
 
-						PAYTVSERVICES = dbs.getOneValue("Prov_IPTV_Resource_Path", "PAYTVSERVICES",
+						PAYTVSERVICES = dbs.getOneValue(tablePrefix + "Prov_IPTV_Resource_Path", "PAYTVSERVICES",
 								new String[] { "Username" }, new String[] { Username }, new String[] { "String" });
 					} else
 					{
@@ -258,7 +269,7 @@ public class Update_CallerDataTable extends Thread
 						PAYTVSERVICES = "";
 					}
 
-					s_dbs.insertValuesInTable("Test_Caller_Data",
+					s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data",
 							new String[] { "CliValue", "DateTimeCalled", "Affected_by_IncidentID", "AffectedServices",
 									"Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME", "PAYTVSERVICES",
 									"NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService", "PoP_Name",
@@ -321,7 +332,7 @@ public class Update_CallerDataTable extends Thread
 
 			} else // CLI was not found in Internet_Resource_Path
 			{
-				s_dbs.insertValuesInTable("Test_Caller_Data",
+				s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data",
 						new String[] { "CliValue", "DateTimeCalled", "Affected_by_IncidentID", "AffectedServices",
 								"Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME", "PAYTVSERVICES",
 								"NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService", "PoP_Name",
