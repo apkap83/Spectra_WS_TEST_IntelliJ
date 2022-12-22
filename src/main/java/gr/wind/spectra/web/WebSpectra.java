@@ -2217,27 +2217,40 @@ public class WebSpectra implements InterfaceWebSpectra
 			// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
 
 			// Search if it is WIND subscriber
-			boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
-					"CliValue", CLI);
+			if (dbs != null && s_dbs != null) {
+				boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
+						"CliValue", CLI);
 
-			// WIND Subscriber
-			if (foundInWind) {
-				Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
-				ponla = co.checkCLIOutage(RequestID, CLI, Service);
+				// WIND Subscriber
+				if (foundInWind) {
+					Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
+					ponla = co.checkCLIOutage(RequestID, CLI, Service);
+					return ponla;
+				}
 			}
 
 			// Search if it is Nova subscriber
-			boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
-					"CliValue", CLI);
+			if (novaDynDBOper != null  && novaStaticDBOper != null) {
+				try {
+					boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
+							"CliValue", CLI);
+					if (foundInNova) { // NOVA Subscriber
+						Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
+						ponla = co.checkCLIOutage(RequestID, CLI, Service);
+						return ponla;
+					}
+				}
+				catch (Exception e) {
+					logger.error("Error while retrieving data from Nova DB !");
+					e.printStackTrace();
+				}
+			}
 
-			if (foundInNova) { // NOVA Subscriber
-				Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
-				ponla = co.checkCLIOutage(RequestID, CLI, Service);
-			}
-			else { // Else Assume WIND operations
-				Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
-				ponla = co.checkCLIOutage(RequestID, CLI, Service);
-			}
+			// Else - Cli Not Found then Assume WIND operations
+			Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
+			ponla = co.checkCLIOutage(RequestID, CLI, Service);
+			return ponla;
+
 
 		} catch (Exception e)
 		{
@@ -2299,6 +2312,5 @@ public class WebSpectra implements InterfaceWebSpectra
 				logger.info("NLU Active Finally block");
 			}
 		}
-		return ponla;
 	}
 }

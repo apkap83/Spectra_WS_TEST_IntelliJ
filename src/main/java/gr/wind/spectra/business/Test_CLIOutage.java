@@ -647,7 +647,7 @@ public class Test_CLIOutage
 
 					} else
 					{
-						logger.info("SysID: CDR_DB ReqID: " + RequestID + " - TTNo Service affection for CLI: "
+						logger.info("SysID: CDR_DB ReqID: " + RequestID + " - No Service affection for CLI: "
 								+ CLIProvided + " for DSLAM: " + ho.getDSLAMName());
 
 						// Update stats
