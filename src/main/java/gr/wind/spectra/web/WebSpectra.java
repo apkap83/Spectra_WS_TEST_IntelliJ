@@ -2146,6 +2146,9 @@ public class WebSpectra implements InterfaceWebSpectra
 				}
 			} catch (Exception ex)
 			{
+				// Try to reconnect to data source...
+				new TnovaStaticDataSource();
+
 				logger.fatal("Could not open connection with Nova Static database!");
 				throw new Exception(ex.getMessage());
 			}
@@ -2165,6 +2168,9 @@ public class WebSpectra implements InterfaceWebSpectra
 				}
 			} catch (Exception ex)
 			{
+				// Try to reconnect to data source...
+				new TnovaDynamicDataSource();
+
 				logger.fatal("Could not open connection with database!");
 				throw new Exception(ex.getMessage());
 			}
@@ -2218,14 +2224,21 @@ public class WebSpectra implements InterfaceWebSpectra
 
 			// Search if it is WIND subscriber
 			if (dbs != null && s_dbs != null) {
-				boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
+
+				try {
+					boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
 						"CliValue", CLI);
 
-				// WIND Subscriber
-				if (foundInWind) {
-					Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
-					ponla = co.checkCLIOutage(RequestID, CLI, Service);
-					return ponla;
+					// WIND Subscriber
+					if (foundInWind) {
+						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
+						ponla = co.checkCLIOutage(RequestID, CLI, Service);
+						return ponla;
+					}
+				}
+				catch (Exception e) {
+					logger.error("NLU_Active: Problem while retrieving data from Wind DB !");
+					e.printStackTrace();
 				}
 			}
 
@@ -2241,7 +2254,7 @@ public class WebSpectra implements InterfaceWebSpectra
 					}
 				}
 				catch (Exception e) {
-					logger.error("Error while retrieving data from Nova DB !");
+					logger.error("NLU_Active: Problem while retrieving data from Nova DB !");
 					e.printStackTrace();
 				}
 			}
