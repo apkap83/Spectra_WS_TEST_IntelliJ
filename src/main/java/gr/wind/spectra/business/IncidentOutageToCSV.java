@@ -164,7 +164,7 @@ public class IncidentOutageToCSV
 		// If the closed incident is a "Data" affected one
 		if (outageAffectedService.equals("Data"))
 		{
-			Path exportedFileName = Paths.get(exportFileDir, "Spectra_CLIs_Affected_OutageID_"
+			Path exportedFileName = Paths.get(exportFileDir, "Spectra_CLIs_Affected_INC_" + incidentID + "_OutageID_"
 					+ outageID + "_Data_" + currentDate + ".csv");
 
 			HierarchySelected = this.replaceHierarchyColumns(HierarchySelected, "Data");
@@ -187,7 +187,7 @@ public class IncidentOutageToCSV
 		// If the closed incident is a "Voice" affected one
 		else if (outageAffectedService.equals("Voice"))
 		{
-			Path exportedFileName = Paths.get(exportFileDir + "Spectra_CLIs_Affected_OutageID_"
+			Path exportedFileName = Paths.get(exportFileDir + "Spectra_CLIs_Affected_INC_" + incidentID + "_OutageID_"
 					+ outageID + "_Voice_" + currentDate + ".csv");
 
 			HierarchySelected = this.replaceHierarchyColumns(HierarchySelected, "Voice");
@@ -204,7 +204,7 @@ public class IncidentOutageToCSV
 		// If the closed incident is a "IPTV" affected one
 		else if (outageAffectedService.equals("IPTV"))
 		{
-			Path exportedFileName = Paths.get(exportFileDir + "Spectra_CLIs_Affected_OutageID_"
+			Path exportedFileName = Paths.get(exportFileDir + "Spectra_CLIs_Affected_INC_" + incidentID + "_OutageID_"
 					+ outageID + "_IPTV_" + currentDate + ".csv");
 
 			HierarchySelected = this.replaceHierarchyColumns(HierarchySelected, "IPTV");
