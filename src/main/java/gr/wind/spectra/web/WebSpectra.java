@@ -2083,6 +2083,7 @@ public class WebSpectra implements InterfaceWebSpectra
 			@WebParam(name = "ServiceL3") @XmlElement(required = false) String ServiceL3)
 			throws Exception, InvalidInputException
 	{
+		Boolean subscriberFoundForWind = false;
 		Logger logger = LogManager.getLogger(gr.wind.spectra.web.WebSpectra.class.getName());
 		Connection conn = null;
 		DB_Connection conObj = null;
@@ -2231,6 +2232,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 					// WIND Subscriber
 					if (foundInWind) {
+						subscriberFoundForWind = true;
 						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
 						ponla = co.checkCLIOutage(RequestID, CLI, Service);
 						return ponla;
@@ -2243,7 +2245,7 @@ public class WebSpectra implements InterfaceWebSpectra
 			}
 
 			// Search if it is Nova subscriber
-			if (novaDynDBOper != null  && novaStaticDBOper != null) {
+			if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
 				try {
 					boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
 							"CliValue", CLI);
@@ -2251,6 +2253,13 @@ public class WebSpectra implements InterfaceWebSpectra
 						Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
 						ponla = co.checkCLIOutage(RequestID, CLI, Service);
 						return ponla;
+					} else {
+						// Cli Not Found then Assume WIND operations
+						if (dbs != null && s_dbs != null) {
+							subscriberFoundForWind = true; // Assume Wind for Reporting server request
+							Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
+							ponla = co.checkCLIOutage(RequestID, CLI, Service);
+						}
 					}
 				}
 				catch (Exception e) {
@@ -2271,7 +2280,7 @@ public class WebSpectra implements InterfaceWebSpectra
 		} finally
 		{
 			// Send Similar request to Spectra_Reporting server ONLY for WIND requests
-			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
+			if (subscriberFoundForWind) {
 				try {
 					Async_NLUActive nluA = new Async_NLUActive(UserName, Password, RequestID, RequestTimestamp, SystemID,
 							CLI, Service, ServiceL2, ServiceL3);
