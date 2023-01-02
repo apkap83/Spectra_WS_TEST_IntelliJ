@@ -2,15 +2,23 @@ package gr.wind.spectra.business;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import gr.wind.spectra.cdrdbconsumer.InsertCallerData;
-import gr.wind.spectra.cdrdbconsumer.WebCDRDBService;
+import gr.wind.spectra.cdrdbconsumernova.InsertCallerData;
+import gr.wind.spectra.cdrdbconsumernova.WebCDRDBService;
 
 public class Update_CallerDataTable extends Thread
 {
 	iDB_Operations dbs;
 	iStatic_DB_Operations s_dbs;
 	String CLIProvided;
+	String Company;
 	String IncidentID;
 	String allAffectedServices;
 	String foundScheduled;
@@ -18,13 +26,14 @@ public class Update_CallerDataTable extends Thread
 	String backupEligible;
 	String requestID;
 	String systemID;
+
 	private String tablePrefix;
 	private final String windTableNamePrefix = "";
 	private final String novaTableNamePrefix = "Nova_";
 
 	public Update_CallerDataTable(iDB_Operations dbs, iStatic_DB_Operations s_dbs, String CLIProvided, String IncidentID,
-			String allAffectedServices, String foundScheduled, String message, String backupEligible, String requestID,
-			String systemID)
+								  String allAffectedServices, String foundScheduled, String message, String backupEligible, String requestID,
+								  String systemID, String Company)
 	{
 		this.dbs = dbs;
 		this.s_dbs = s_dbs;
@@ -36,6 +45,8 @@ public class Update_CallerDataTable extends Thread
 		this.backupEligible = backupEligible;
 		this.requestID = requestID;
 		this.systemID = systemID;
+		this.Company = Company;
+
 
 		// Check if Export is for Nova or Wind
 		if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
@@ -75,8 +86,14 @@ public class Update_CallerDataTable extends Thread
 								"PASPORT_COID", "LOOP_NUMBER", "CLI_TYPE", "Domain", "ServiceType", "BRASNAME" },
 						new String[] { "CliValue" }, new String[] { CLIProvided }, new String[] { "String" });
 
+				int timesFound = 0;
 				while (rs.next())
 				{
+					timesFound += 1;
+					if (timesFound > 1)
+					{
+						break; // Only 1 entry will be logged (even if subscriber belongs to 2 BRAS)
+					}
 
 					String NGA_TYPE = rs.getString("NGA_TYPE");
 					String GeneralArea = rs.getString("GeneralArea");
@@ -269,97 +286,159 @@ public class Update_CallerDataTable extends Thread
 						PAYTVSERVICES = "";
 					}
 
-					s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data",
-							new String[] { "CliValue", "DateTimeCalled", "Affected_by_IncidentID", "AffectedServices",
-									"Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME", "PAYTVSERVICES",
-									"NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService", "PoP_Name",
-									"PoP_Code", "OltElementName", "OltRackNo", "OltSubRackNo", "OltSlot", "OltPort",
-									"Onu", "KvCode", "CabinetCode", "ActiveElement", "Rack", "Subrack", "Slot", "Port",
-									"PORT_LOCATION", "PORT_CABLE_CODE", "PORT_ID", "CLID", "Username", "PASPORT_COID",
-									"LOOP_NUMBER", "CLI_TYPE", "Domain", "ServiceType", "BRASNAME" },
-							new String[] { CLIProvided, hf.now(), IncidentID, allAffectedServices, foundScheduled,
-									message, backupEligible, CSSCOLLECTIONNAME, PAYTVSERVICES, NGA_TYPE, GeneralArea,
-									SiteName, Concentrator, AccessService, PoP_Name, PoP_Code, OltElementName,
-									OltRackNo, OltSubRackNo, OltSlot, OltPort, Onu, KvCode, CabinetCode, ActiveElement,
-									Rack, Subrack, Slot, Port, PORT_LOCATION, PORT_CABLE_CODE, PORT_ID, CLID, Username,
-									PASPORT_COID, LOOP_NUMBER, CLI_TYPE, Domain, ServiceType, BRASNAME },
-							new String[] { "String", "DateTime", "String", "String", "String", "String", "String",
+					s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data", new String[] { "Requestor", "CliValue", "DateTimeCalled",
+									"Affected_by_IncidentID", "AffectedServices", "Scheduled", "Message", "BackupEligible",
+									"CSSCOLLECTIONNAME", "PAYTVSERVICES", "NGA_TYPE", "GeneralArea", "SiteName", "Concentrator",
+									"AccessService", "PoP_Name", "PoP_Code", "OltElementName", "OltRackNo", "OltSubRackNo",
+									"OltSlot", "OltPort", "Onu", "KvCode", "CabinetCode", "ActiveElement", "Rack", "Subrack",
+									"Slot", "Port", "PORT_LOCATION", "PORT_CABLE_CODE", "PORT_ID", "CLID", "Username",
+									"PASPORT_COID", "LOOP_NUMBER", "CLI_TYPE", "Domain", "ServiceType", "BRASNAME" },
+							new String[] { systemID, CLIProvided, hf.now(), IncidentID, allAffectedServices,
+									foundScheduled, message, backupEligible, CSSCOLLECTIONNAME, PAYTVSERVICES, NGA_TYPE,
+									GeneralArea, SiteName, Concentrator, AccessService, PoP_Name, PoP_Code,
+									OltElementName, OltRackNo, OltSubRackNo, OltSlot, OltPort, Onu, KvCode, CabinetCode,
+									ActiveElement, Rack, Subrack, Slot, Port, PORT_LOCATION, PORT_CABLE_CODE, PORT_ID,
+									CLID, Username, PASPORT_COID, LOOP_NUMBER, CLI_TYPE, Domain, ServiceType,
+									BRASNAME },
+							new String[] { "String", "String", "DateTime", "String", "String", "String", "String",
 									"String", "String", "String", "String", "String", "String", "String", "String",
 									"String", "String", "String", "String", "String", "String", "String", "String",
 									"String", "String", "String", "String", "String", "String", "String", "String",
 									"String", "String", "String", "String", "String", "String", "String", "String",
-									"String" });
+									"String", "String" });
 
-					// ****************************************************
-					// Send request CDR DB for Archiving the Caller request
-					// *****************************************************
-					try
-					{
-						WebCDRDBService myWebService = new WebCDRDBService();
-						gr.wind.spectra.cdrdbconsumer.InterfaceWebCDRDB iws = myWebService.getWebCDRDBPort();
-
-						InsertCallerData icd = new InsertCallerData();
-
-						icd.setRequestID(requestID);
-						icd.setUsername(Username);
-						icd.setCli(CLIProvided);
-						icd.setIncidentNumber(IncidentID);
-						icd.setAffectedServices(allAffectedServices);
-						icd.setPayTVServices(PAYTVSERVICES);
-						icd.setIsScheduled(foundScheduled);
-						icd.setBackupElegible(backupEligible);
-						icd.setCSSCollectionName(CSSCOLLECTIONNAME);
-						icd.setAccessService(AccessService);
-						icd.setCLID(CLID);
-						icd.setActiveElement(ActiveElement);
-						icd.setBRASName(BRASNAME);
-						icd.setCOID(PASPORT_COID);
-						icd.setAPIUser("DIOAN");
-						icd.setAPIProcess(systemID);
-
-						iws.insertCallerData(icd, "spectra", "YtfLwvEuCAly9fJS6R46");
-
-						// gr.wind.spectra.cdrdbconsumer.HasOutageResponse hor = iws.hasOutage(ho, "spectra",
-						// "YtfLwvEuCAly9fJS6R46");
-
-					} catch (Exception e)
-					{
-
-						e.printStackTrace();
-					}
+					SendRequestToCDRDBFoundCLI(Username, PAYTVSERVICES, CSSCOLLECTIONNAME, AccessService, CLID,
+							ActiveElement, BRASNAME, PASPORT_COID);
 
 				}
 
-			} else // CLI was not found in Internet_Resource_Path
+			} else /// CLI was not found in Internet_Resource_Path
 			{
 				s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data",
-						new String[] { "CliValue", "DateTimeCalled", "Affected_by_IncidentID", "AffectedServices",
-								"Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME", "PAYTVSERVICES",
-								"NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService", "PoP_Name",
-								"PoP_Code", "OltElementName", "OltRackNo", "OltSubRackNo", "OltSlot", "OltPort", "Onu",
-								"KvCode", "CabinetCode", "ActiveElement", "Rack", "Subrack", "Slot", "Port",
-								"PORT_LOCATION", "PORT_CABLE_CODE", "PORT_ID", "CLID", "Username", "PASPORT_COID",
-								"LOOP_NUMBER", "CLI_TYPE", "Domain", "ServiceType", "BRASNAME" },
-						new String[] { CLIProvided, hf.now(), "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+						new String[] { "Requestor", "CliValue", "DateTimeCalled", "Affected_by_IncidentID",
+								"AffectedServices", "Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME",
+								"PAYTVSERVICES", "NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService",
+								"PoP_Name", "PoP_Code", "OltElementName", "OltRackNo", "OltSubRackNo", "OltSlot",
+								"OltPort", "Onu", "KvCode", "CabinetCode", "ActiveElement", "Rack", "Subrack", "Slot",
+								"Port", "PORT_LOCATION", "PORT_CABLE_CODE", "PORT_ID", "CLID", "Username",
+								"PASPORT_COID", "LOOP_NUMBER", "CLI_TYPE", "Domain", "ServiceType", "BRASNAME" },
+						new String[] { systemID, CLIProvided, hf.now(), "", "", "", "", "", "", "", "", "", "", "", "",
 								"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-								"", "" },
-						new String[] { "String", "DateTime", "String", "String", "String", "String", "String", "String",
+								"", "", "", "" },
+						new String[] { "String", "String", "DateTime", "String", "String", "String", "String", "String",
 								"String", "String", "String", "String", "String", "String", "String", "String",
 								"String", "String", "String", "String", "String", "String", "String", "String",
 								"String", "String", "String", "String", "String", "String", "String", "String",
-								"String", "String", "String", "String", "String", "String", "String", "String" });
+								"String", "String", "String", "String", "String", "String", "String", "String",
+								"String" });
 
+				SendRequestToCDRDBNOTFoundCLI();
+			}
+
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void SendRequestToCDRDBFoundCLI(String Username, String PAYTVSERVICES, String CSSCOLLECTIONNAME,
+											String AccessService, String CLID, String ActiveElement, String BRASNAME, String PASPORT_COID)
+	{
+		// How do I call some blocking method with a timeout in Java?
+		// https://stackoverflow.com/questions/1164301/how-do-i-call-some-blocking-method-with-a-timeout-in-java
+
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Callable<Object> task = new Callable<Object>()
+		{
+			@Override
+			public Object call() throws Exception
+			{
 				// ****************************************************
 				// Send request CDR DB for Archiving the Caller request
 				// *****************************************************
 				try
 				{
 					WebCDRDBService myWebService = new WebCDRDBService();
-					gr.wind.spectra.cdrdbconsumer.InterfaceWebCDRDB iws = myWebService.getWebCDRDBPort();
+					gr.wind.spectra.cdrdbconsumernova.InterfaceWebCDRDB iws = myWebService.getWebCDRDBPort();
 
 					InsertCallerData icd = new InsertCallerData();
 
 					icd.setRequestID(requestID);
+					icd.setCompany(Company);
+					icd.setUsername(Username);
+					icd.setCli(CLIProvided);
+					icd.setIncidentNumber(IncidentID);
+					icd.setAffectedServices(allAffectedServices);
+					icd.setPayTVServices(PAYTVSERVICES);
+					icd.setIsScheduled(foundScheduled);
+					icd.setBackupElegible(backupEligible);
+					icd.setCSSCollectionName(CSSCOLLECTIONNAME);
+					icd.setAccessService(AccessService);
+					icd.setCLID(CLID);
+					icd.setActiveElement(ActiveElement);
+					icd.setBRASName(BRASNAME);
+					icd.setCOID(PASPORT_COID);
+					icd.setAPIUser("spectra");
+					icd.setAPIProcess(systemID);
+
+					iws.insertCallerData(icd, "spectra", "YtfLwvEuCAly9fJS6R46");
+
+				} catch (Exception e)
+				{
+
+					e.printStackTrace();
+				}
+				return null;
+
+			};
+		};
+
+		Future<Object> future = executor.submit(task);
+		try
+		{
+			Object result = future.get(300, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException ex)
+		{
+			// handle the timeout
+			System.out.println("Update_CallerDataTable TimeoutException for CDRDB Insert Statement: " + requestID);
+		} catch (InterruptedException e)
+		{
+			// handle the interrupts
+			System.out.println("Update_CallerDataTable InterruptedException for CDRDB Insert Statement: " + requestID);
+		} catch (ExecutionException e)
+		{
+			// handle other exceptions
+			System.out.println("Update_CallerDataTable ExecutionException for CDRDB Insert Statement: " + requestID);
+		} finally
+		{
+			future.cancel(true); // may or may not desire this
+		}
+	}
+
+	private void SendRequestToCDRDBNOTFoundCLI()
+	{
+		// How do I call some blocking method with a timeout in Java?
+		// https://stackoverflow.com/questions/1164301/how-do-i-call-some-blocking-method-with-a-timeout-in-java
+
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Callable<Object> task = new Callable<Object>()
+		{
+			@Override
+			public Object call() throws Exception
+			{
+				// ****************************************************
+				// Send request CDR DB for Archiving the Caller request
+				// *****************************************************
+				try
+				{
+					WebCDRDBService myWebService = new WebCDRDBService();
+					gr.wind.spectra.cdrdbconsumernova.InterfaceWebCDRDB iws = myWebService.getWebCDRDBPort();
+
+					InsertCallerData icd = new InsertCallerData();
+
+					icd.setRequestID(requestID);
+					icd.setCompany(Company);
 					icd.setUsername("");
 					icd.setCli(CLIProvided);
 					icd.setIncidentNumber(IncidentID);
@@ -383,13 +462,31 @@ public class Update_CallerDataTable extends Thread
 
 					e.printStackTrace();
 				}
+				return null;
 
-			}
+			};
 
-		} catch (SQLException e)
+		};
+
+		Future<Object> future = executor.submit(task);
+		try
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Object result = future.get(300, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException ex)
+		{
+			// handle the timeout
+			System.out.println("Update_CallerDataTable TimeoutException for CDRDB Insert Statement: " + requestID);
+		} catch (InterruptedException e)
+		{
+			// handle the interrupts
+			System.out.println("Update_CallerDataTable InterruptedException for CDRDB Insert Statement: " + requestID);
+		} catch (ExecutionException e)
+		{
+			// handle other exceptions
+			System.out.println("Update_CallerDataTable ExecutionException for CDRDB Insert Statement: " + requestID);
+		} finally
+		{
+			future.cancel(true); // may or may not desire this
 		}
 	}
 

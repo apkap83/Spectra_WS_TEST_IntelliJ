@@ -2268,12 +2268,6 @@ public class WebSpectra implements InterfaceWebSpectra
 				}
 			}
 
-			// Else - Cli Not Found then Assume WIND operations
-			Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
-			ponla = co.checkCLIOutage(RequestID, CLI, Service);
-			return ponla;
-
-
 		} catch (Exception e)
 		{
 			throw e;
@@ -2334,5 +2328,6 @@ public class WebSpectra implements InterfaceWebSpectra
 				logger.info("NLU Active Finally block");
 			}
 		}
+		return ponla;
 	}
 }
