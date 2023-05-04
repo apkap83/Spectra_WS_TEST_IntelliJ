@@ -201,7 +201,7 @@ public class Test_CLIOutage
 				ucdt.run();
 
 				// Update asynchronously Test_Stats_Pos_NLU_Requests to count number of successful NLU requests per CLI
-				Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs, "AdHoc_Outage",
+				Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs,  systemID,"AdHoc_Outage",
 						"Voice|Data|IPTV", "Yes", CLIProvided);
 				uRat.run();
 
@@ -753,7 +753,7 @@ public class Test_CLIOutage
 				}
 
 				// Update asynchronously Test_Stats_Pos_NLU_Requests to count number of successful NLU requests per CLI
-				Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs, foundIncidentID,
+				Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs, systemID, foundIncidentID,
 						allAffectedServices, foundScheduled, CLIProvided);
 				uRat.run();
 
