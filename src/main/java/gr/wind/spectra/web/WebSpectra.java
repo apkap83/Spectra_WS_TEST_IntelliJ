@@ -903,7 +903,6 @@ public class WebSpectra implements InterfaceWebSpectra
 						if (uniqueLocationsSet.size() > 0)
 						{
 							locationsAffected = String.join("|", uniqueLocationsSet);
-							//						System.out.println("locationsAffected = " + locationsAffected);
 						} else
 						{
 							locationsAffected = "none";
@@ -1088,9 +1087,6 @@ public class WebSpectra implements InterfaceWebSpectra
 										new String[]{"DTH"},
 										new String[]{"String"},
 										ngaTypes);
-
-								System.out.println("1095 ");
-								System.out.println("IPTVCustomersAffected:  " + IPTVCustomersAffected);
 							}
 
 						}
@@ -1179,32 +1175,32 @@ public class WebSpectra implements InterfaceWebSpectra
 					// Insert Values in Database
 					try
 					{
-						System.out.println("**** Backup Eligible = " + backupEligible);
-						System.out.println("rootHierarchySelected: " + rootHierarchySelected);
-						System.out.println("HierarchySelected: " + HierarchySelected);
-						System.out.println("OpenReqID: " + RequestID);
-						System.out.println("backupEligible: " + backupEligible);
-						System.out.println("OutageID_String: " + RequestID);
-						System.out.println("RequestTimestamp: " + RequestTimestamp);
-						System.out.println("SystemID: " + SystemID);
-						System.out.println("UserID: " + UserID);
-						System.out.println("IncidentID: " + IncidentID);
-						System.out.println("Scheduled: " + Scheduled);
-						System.out.println("EndTime: " + EndTime);
-						System.out.println("Duration: " + Duration);
-						System.out.println("service: " + service);
-						System.out.println("Impact: " + Impact);
-						System.out.println("Priority: " + Priority);
-						System.out.println("HierarchySelected: " + myHier.get(i).toString());
-						System.out.println("locationsAffected: " + locationsAffected);
-
-						System.out.println("voiceCustomersAffected: " + voiceCustomersAffected);
-						System.out.println("dataCustomersAffected: " + dataCustomersAffected);
-						System.out.println("CLIsAffected: " + CLIsAffected);
-						System.out.println("IPTVCustomersAffected: " + IPTVCustomersAffected);
-						System.out.println("IncidentAffectedVoiceCustomers: " + Integer.toString(totalVoiceIncidentAffected));
-						System.out.println("IncidentAffectedDataCustomers: " + Integer.toString(totalDataIncidentAffected));
-						System.out.println("IncidentAffectedIPTVCustomers: " + Integer.toString(totalIPTVIncidentAffected));
+//						System.out.println("**** Backup Eligible = " + backupEligible);
+//						System.out.println("rootHierarchySelected: " + rootHierarchySelected);
+//						System.out.println("HierarchySelected: " + HierarchySelected);
+//						System.out.println("OpenReqID: " + RequestID);
+//						System.out.println("backupEligible: " + backupEligible);
+//						System.out.println("OutageID_String: " + RequestID);
+//						System.out.println("RequestTimestamp: " + RequestTimestamp);
+//						System.out.println("SystemID: " + SystemID);
+//						System.out.println("UserID: " + UserID);
+//						System.out.println("IncidentID: " + IncidentID);
+//						System.out.println("Scheduled: " + Scheduled);
+//						System.out.println("EndTime: " + EndTime);
+//						System.out.println("Duration: " + Duration);
+//						System.out.println("service: " + service);
+//						System.out.println("Impact: " + Impact);
+//						System.out.println("Priority: " + Priority);
+//						System.out.println("HierarchySelected: " + myHier.get(i).toString());
+//						System.out.println("locationsAffected: " + locationsAffected);
+//
+//						System.out.println("voiceCustomersAffected: " + voiceCustomersAffected);
+//						System.out.println("dataCustomersAffected: " + dataCustomersAffected);
+//						System.out.println("CLIsAffected: " + CLIsAffected);
+//						System.out.println("IPTVCustomersAffected: " + IPTVCustomersAffected);
+//						System.out.println("IncidentAffectedVoiceCustomers: " + Integer.toString(totalVoiceIncidentAffected));
+//						System.out.println("IncidentAffectedDataCustomers: " + Integer.toString(totalDataIncidentAffected));
+//						System.out.println("IncidentAffectedIPTVCustomers: " + Integer.toString(totalIPTVIncidentAffected));
 
 
 
@@ -1253,7 +1249,6 @@ public class WebSpectra implements InterfaceWebSpectra
 							OutageId_Prefix = "Nova_";
 						}
 
-
 						ProductOfSubmission ps = new ProductOfSubmission(RequestID, OutageId_Prefix + OutageID_String, IncidentID,
 								voiceCustomersAffected, dataCustomersAffected, IPTVCustomersAffected, CLIsAffected,
 								locationsAffected, Integer.toString(totalVoiceIncidentAffected),
@@ -1262,11 +1257,13 @@ public class WebSpectra implements InterfaceWebSpectra
 								"Submitted Successfully");
 						prodElementsList.add(ps);
 
-						// Production of the CSV Exported File for the Closed Incident.
-						// TODO: Fix Export to CSV.
-//						OpenningIncidentOutageToCSV OIATCSV = new OpenningIncidentOutageToCSV(dbOps, s_dbOps, IncidentID,
-//								OutageID_String);
-//						OIATCSV.produceReport();
+						// Production of the CSV Exported File for the Opened Incident - Except for Massive_TV_Outage root hierarchy
+						if (!rootHierarchySelected.equals("Massive_TV_Outage"))
+						{
+							OpenningIncidentOutageToCSV OIATCSV = new OpenningIncidentOutageToCSV(dbOps, s_dbOps, IncidentID,
+									OutageID_String);
+							OIATCSV.produceReport();
+						}
 
 						logger.info(req.getRemoteAddr() + " - ReqID: " + RequestID + " - Submitted Outage: INCID: "
 								+ IncidentID + " | OutageID: " + OutageID_String);
@@ -2099,9 +2096,19 @@ public class WebSpectra implements InterfaceWebSpectra
 						logger.info(req.getRemoteAddr() + " - ReqID: " + RequestID + " - Close Outage: INCID: "
 								+ IncidentID + "| OutageID: " + OutageID + " successfully CLOSED");
 
-						// Production of the CSV Exported File for the Closed Incident.
-						IncidentOutageToCSV IOCSV = new IncidentOutageToCSV(dbOps, s_dbOps, IncidentID, OutageID);
-						IOCSV.produceReport();
+
+						// Get Hierarchy of the Outage in order to check if it is Massive_TV_Outage
+						String HierarchySelectedOfOutage = s_dbOps.getOneValue(tablePrefix + "Test_SubmittedIncidents", "HierarchySelected",
+								new String[] { "IncidentID", "OutageID" }, new String[] { IncidentID, OutageID },
+								new String[] { "String", "String" });
+
+						// Production of the CSV Exported File for the Closed Incident - Except for Massive_TV_Outage hierarchies
+						if (!HierarchySelectedOfOutage.startsWith("Massive_TV_Outage"))
+						{
+							IncidentOutageToCSV IOCSV = new IncidentOutageToCSV(dbOps, s_dbOps, IncidentID, OutageID);
+							IOCSV.produceReport();
+						}
+
 
 						poca = new ProductOfCloseOutage(RequestID, IncidentID, OutageID, "990",
 								"Successfully Closed Incident");

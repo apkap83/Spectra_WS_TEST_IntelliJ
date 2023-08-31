@@ -201,7 +201,7 @@ public class OpenningIncidentOutageToCSV
 			sCSV.start();
 		}
 
-		// If the closed incident is a "Voice" affected one
+		// If the open/closed incident is a "Voice" affected one
 		else if (outageAffectedService.equals("Voice"))
 		{
 			Path exportedFileName = Paths.get(exportFileDir,"Spectra_CLIs_Affected_INC_"
