@@ -17,6 +17,7 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 
 import gr.wind.spectra.business.*;
+import gr.wind.spectra.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,12 +26,6 @@ import gr.wind.spectra.consumerRequests.Async_GetHierarchy;
 import gr.wind.spectra.consumerRequests.Async_ModifyOutage;
 import gr.wind.spectra.consumerRequests.Async_NLUActive;
 import gr.wind.spectra.consumerRequests.Async_SubmitOutage;
-import gr.wind.spectra.model.ProductOfCloseOutage;
-import gr.wind.spectra.model.ProductOfGetHierarchy;
-import gr.wind.spectra.model.ProductOfGetOutage;
-import gr.wind.spectra.model.ProductOfModify;
-import gr.wind.spectra.model.ProductOfNLUActive;
-import gr.wind.spectra.model.ProductOfSubmission;
 
 @WebService(endpointInterface = "gr.wind.spectra.web.InterfaceWebSpectra")
 public class WebSpectra implements InterfaceWebSpectra
@@ -686,6 +681,7 @@ public class WebSpectra implements InterfaceWebSpectra
 			hf.validateNotEmpty("HierarchySelected", HierarchySelected);
 
 			// Split to % and to | the hierarchy provided
+			// myHier = Massive_TV_Outage->TV_Service=ALL_Satellite_Boxes
 			List<String> myHier = hf.getHierarchySelections(HierarchySelected);
 
 			// Get Max Outage ID (type int)
@@ -715,12 +711,6 @@ public class WebSpectra implements InterfaceWebSpectra
 			{
 				for (int i = 0; i < myHier.size(); i++)
 				{
-					// Backup Eligible - Addition of 23 Apr 2021
-					if (Impact.equals("LoS") && (service.equals("Voice") || service.equals("Data")))
-					{
-						backupEligible = "Yes";
-					}
-
 					// If the sumbission contains only root hierarchy then STOP submission
 					if (!myHier.get(i).contains("="))
 					{
@@ -782,97 +772,145 @@ public class WebSpectra implements InterfaceWebSpectra
 							new String[] { "RootHierarchyNode" }, new String[] { rootHierarchySelected },
 							new String[] { "String" });
 
-					// Count distinct values of Usernames or CliVlaues in the respective columns
-					String dataCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							ngaTypes);
+					String voiceCustomersAffected = "0";
+					String dataCustomersAffected = "0";
+					String IPTVCustomersAffected = "0";
 
-					// Count distinct values of Usernames or CliVlaues in the respective columns
-					String IPTVCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							ngaTypes);
+					// For Massive TV Outage Only...
+					if (rootHierarchySelected.startsWith(Massive_TV_Outage.Massive_TV_Outage.getDisplayName())) {
 
-					String voiceCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							ngaTypes);
+						if (service.equals("IPTV")) {
+							backupEligible = "No";
 
-					// For Voice no data customers are affected and vice versa
-					if (service.equals("Voice"))
-					{
-						dataCustomersAffected = "0";
-						IPTVCustomersAffected = "0";
+							voiceCustomersAffected = "0";
+							dataCustomersAffected = "0";
 
-						// Get Unique Locations affected from Voice_Resource_Path
-						List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_Voice_Resource_Path", "SiteName",
-								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-										fullVoiceHierarchyPathSplit)),
-								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-										fullVoiceHierarchyPathSplit)),
-								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
-										myHier.get(i).toString(), fullVoiceHierarchyPathSplit)));
-						locationsAffectedList.addAll(myList);
+							// All EON Boxes
+							if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_EON_Boxes.getDisplayName())) {
 
-					} else if (service.equals("Data"))
-					{
-						voiceCustomersAffected = "0";
-						IPTVCustomersAffected = "0";
+								IPTVCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+										new String[]{"TV_ID"},
+										new String[]{"TV_Service"},
+										new String[]{"OTT"},
+										new String[]{"String"},
+										ngaTypes);
 
-						// Get Unique Locations affected from Internet_Resource_Path
-						List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_Internet_Resource_Path", "SiteName",
+								// All Satellite Boxes
+							} else if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_Satellite_Boxes.getDisplayName())) {
+
+								IPTVCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+										new String[]{"TV_ID"},
+										new String[]{"TV_Service"},
+										new String[]{"DTH"},
+										new String[]{"String"},
+										ngaTypes);
+							}
+						}
+
+
+						// For Everything else except Massive TV Outage
+					} else {
+
+						// Backup Eligible - Addition of 23 Apr 2021
+						if (Impact.equals("LoS") && (service.equals("Voice") || service.equals("Data")))
+						{
+							backupEligible = "Yes";
+						}
+
+						// Count distinct values of Usernames or CliVlaues in the respective columns
+						dataCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
+								new String[] { "PASPORT_COID" },
 								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
 										fullDataHierarchyPathSplit)),
 								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
 										fullDataHierarchyPathSplit)),
-								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
-										myHier.get(i).toString(), fullDataHierarchyPathSplit)));
-						locationsAffectedList.addAll(myList);
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullDataHierarchyPathSplit)),
+								ngaTypes);
 
-					} else if (service.equals("IPTV"))
-					{
-						dataCustomersAffected = "0";
-						voiceCustomersAffected = "0";
-
-						// Get Unique Locations affected from Internet_Resource_Path
-						List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_IPTV_Resource_Path", "SiteName",
+						// Count distinct values of Usernames or CliVlaues in the respective columns
+						IPTVCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+								new String[] { "PASPORT_COID" },
 								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
 										fullIPTVHierarchyPathSplit)),
 								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
 										fullIPTVHierarchyPathSplit)),
-								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
-										myHier.get(i).toString(), fullIPTVHierarchyPathSplit)));
-						locationsAffectedList.addAll(myList);
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullIPTVHierarchyPathSplit)),
+								ngaTypes);
+
+						voiceCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
+								new String[] { "PASPORT_COID" },
+								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								ngaTypes);
+
+						// For Voice no data customers are affected and vice versa
+						if (service.equals("Voice"))
+						{
+							dataCustomersAffected = "0";
+							IPTVCustomersAffected = "0";
+
+							// Get Unique Locations affected from Voice_Resource_Path
+							List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_Voice_Resource_Path", "SiteName",
+									hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullVoiceHierarchyPathSplit)),
+									hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullVoiceHierarchyPathSplit)),
+									hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
+											myHier.get(i).toString(), fullVoiceHierarchyPathSplit)));
+							locationsAffectedList.addAll(myList);
+
+						} else if (service.equals("Data"))
+						{
+							voiceCustomersAffected = "0";
+							IPTVCustomersAffected = "0";
+
+							// Get Unique Locations affected from Internet_Resource_Path
+							List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_Internet_Resource_Path", "SiteName",
+									hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullDataHierarchyPathSplit)),
+									hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullDataHierarchyPathSplit)),
+									hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
+											myHier.get(i).toString(), fullDataHierarchyPathSplit)));
+							locationsAffectedList.addAll(myList);
+
+						} else if (service.equals("IPTV"))
+						{
+							dataCustomersAffected = "0";
+							voiceCustomersAffected = "0";
+
+							// Get Unique Locations affected from Internet_Resource_Path
+							List<String> myList = dbOps.getOneColumnUniqueResultSet(tablePrefix + "Prov_IPTV_Resource_Path", "SiteName",
+									hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullIPTVHierarchyPathSplit)),
+									hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+											fullIPTVHierarchyPathSplit)),
+									hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(
+											myHier.get(i).toString(), fullIPTVHierarchyPathSplit)));
+							locationsAffectedList.addAll(myList);
+						}
+
+						// Pick Unique values from locationsAffectedList
+						uniqueLocationsSet = new HashSet<String>(locationsAffectedList);
+
+						// Concatenating uniqueLocationsSet with pipe delimeter
+						if (uniqueLocationsSet.size() > 0)
+						{
+							locationsAffected = String.join("|", uniqueLocationsSet);
+							//						System.out.println("locationsAffected = " + locationsAffected);
+						} else
+						{
+							locationsAffected = "none";
+						}
+
 					}
 
-					// Pick Unique values from locationsAffectedList
-					uniqueLocationsSet = new HashSet<String>(locationsAffectedList);
-
-					// Concatenating uniqueLocationsSet with pipe delimeter
-					if (uniqueLocationsSet.size() > 0)
-					{
-						locationsAffected = String.join("|", uniqueLocationsSet);
-						//						System.out.println("locationsAffected = " + locationsAffected);
-					} else
-					{
-						locationsAffected = "none";
-					}
 
 					incidentDataCustomersAffected += Integer.parseInt(dataCustomersAffected);
 					incidentVoiceCustomersAffected += Integer.parseInt(voiceCustomersAffected);
@@ -1018,51 +1056,91 @@ public class WebSpectra implements InterfaceWebSpectra
 							new String[] { "RootHierarchyNode" }, new String[] { rootHierarchySelected },
 							new String[] { "String" });
 
-					// Count distinct values of Usernames or CliVlaues the respective columns
-					String dataCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullDataHierarchyPathSplit)),
-							ngaTypes);
+					String dataCustomersAffected = "0";
+					String IPTVCustomersAffected = "0";
+					String voiceCustomersAffected = "0";
 
-					String IPTVCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullIPTVHierarchyPathSplit)),
-							ngaTypes);
+					// For Massive TV Outage Only...
+					if (rootHierarchySelected.startsWith(Massive_TV_Outage.Massive_TV_Outage.getDisplayName())) {
 
-					String voiceCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
-							new String[] { "PASPORT_COID" },
-							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
-									fullVoiceHierarchyPathSplit)),
-							ngaTypes);
+						if (service.equals("IPTV")) {
+							backupEligible = "No";
+
+							voiceCustomersAffected = "0";
+							dataCustomersAffected = "0";
+
+							// All EON Boxes
+							if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_EON_Boxes.getDisplayName())) {
+
+								IPTVCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+										new String[]{"TV_ID"},
+										new String[]{"TV_Service"},
+										new String[]{"OTT"},
+										new String[]{"String"},
+										ngaTypes);
+
+								// All Satellite Boxes
+							} else if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_Satellite_Boxes.getDisplayName())) {
+
+								IPTVCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+										new String[]{"TV_ID"},
+										new String[]{"TV_Service"},
+										new String[]{"DTH"},
+										new String[]{"String"},
+										ngaTypes);
+
+								System.out.println("1095 ");
+								System.out.println("IPTVCustomersAffected:  " + IPTVCustomersAffected);
+							}
+
+						}
+
+						// For Everything else except Massive TV Outage
+					} else {
+						// Count distinct values of Usernames or CliVlaues the respective columns
+						voiceCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
+								new String[]{"PASPORT_COID"},
+								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullVoiceHierarchyPathSplit)),
+								ngaTypes);
+
+						dataCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
+								new String[]{"PASPORT_COID"},
+								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullDataHierarchyPathSplit)),
+								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullDataHierarchyPathSplit)),
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullDataHierarchyPathSplit)),
+								ngaTypes);
+
+						IPTVCustomersAffected = dbOps.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+								new String[]{"PASPORT_COID"},
+								hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullIPTVHierarchyPathSplit)),
+								hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullIPTVHierarchyPathSplit)),
+								hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(myHier.get(i).toString(),
+										fullIPTVHierarchyPathSplit)),
+								ngaTypes);
+					}
 
 					// For Voice no data customers are affected and vice versa
-					if (service.equals("Voice"))
-					{
+					if (service.equals("Voice")) {
 						dataCustomersAffected = "0";
 						IPTVCustomersAffected = "0";
-					} else if (service.equals("Data"))
-					{
+					} else if (service.equals("Data")) {
 						voiceCustomersAffected = "0";
 						IPTVCustomersAffected = "0";
-					} else if (service.equals("IPTV"))
-					{
+					} else if (service.equals("IPTV")) {
 						dataCustomersAffected = "0";
 						voiceCustomersAffected = "0";
 					}
+
 
 					// Get Max again
 					OutageID_Integer = s_dbOps.getMaxIntegerValue(tablePrefix + "Test_SubmittedIncidents", "OutageID");
@@ -1084,13 +1162,53 @@ public class WebSpectra implements InterfaceWebSpectra
 					int totalIPTVIncidentAffected = incidentIPTVCustomersAffected
 							+ Integer.parseInt(numberOfIPTVCustAffectedFromPreviousIncidents);
 
-					// Concatenate locations with pipe
-					locationsAffected = String.join("|", uniqueLocationsSet);
+
+					// Case the Hiearchy starts with 'Massive_TV_Outage'
+					if (rootHierarchySelected.startsWith(Massive_TV_Outage.Massive_TV_Outage.getDisplayName())) {
+						if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_EON_Boxes.getDisplayName())) {
+							locationsAffected = "All EON Locations";
+						} else if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_Satellite_Boxes.getDisplayName())) {
+							locationsAffected = "All Satellite Dish Locations";
+						}
+					} else {
+						// Concatenate locations with pipe
+						locationsAffected = String.join("|", uniqueLocationsSet);
+					}
+
 
 					// Insert Values in Database
 					try
 					{
 						System.out.println("**** Backup Eligible = " + backupEligible);
+						System.out.println("rootHierarchySelected: " + rootHierarchySelected);
+						System.out.println("HierarchySelected: " + HierarchySelected);
+						System.out.println("OpenReqID: " + RequestID);
+						System.out.println("backupEligible: " + backupEligible);
+						System.out.println("OutageID_String: " + RequestID);
+						System.out.println("RequestTimestamp: " + RequestTimestamp);
+						System.out.println("SystemID: " + SystemID);
+						System.out.println("UserID: " + UserID);
+						System.out.println("IncidentID: " + IncidentID);
+						System.out.println("Scheduled: " + Scheduled);
+						System.out.println("EndTime: " + EndTime);
+						System.out.println("Duration: " + Duration);
+						System.out.println("service: " + service);
+						System.out.println("Impact: " + Impact);
+						System.out.println("Priority: " + Priority);
+						System.out.println("HierarchySelected: " + myHier.get(i).toString());
+						System.out.println("locationsAffected: " + locationsAffected);
+
+						System.out.println("voiceCustomersAffected: " + voiceCustomersAffected);
+						System.out.println("dataCustomersAffected: " + dataCustomersAffected);
+						System.out.println("CLIsAffected: " + CLIsAffected);
+						System.out.println("IPTVCustomersAffected: " + IPTVCustomersAffected);
+						System.out.println("IncidentAffectedVoiceCustomers: " + Integer.toString(totalVoiceIncidentAffected));
+						System.out.println("IncidentAffectedDataCustomers: " + Integer.toString(totalDataIncidentAffected));
+						System.out.println("IncidentAffectedIPTVCustomers: " + Integer.toString(totalIPTVIncidentAffected));
+
+
+
+
 						s_dbOps.insertValuesInTable(tablePrefix + "Test_SubmittedIncidents",
 								new String[] { "OpenReqID", "DateTime", "WillBePublished", "BackupEligible", "OutageID",
 										"IncidentStatus", "RequestTimestamp", "SystemID", "UserID", "IncidentID",
@@ -1117,8 +1235,17 @@ public class WebSpectra implements InterfaceWebSpectra
 
 					if (Integer.parseInt(OutageID_String) > 0)
 					{
-						// Concatenate locations with comma
-						locationsAffected = String.join(", ", uniqueLocationsSet);
+						// Case the Hiearchy starts with 'Massive_TV_Outage'
+						if (rootHierarchySelected.startsWith(Massive_TV_Outage.Massive_TV_Outage.getDisplayName())) {
+							if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_EON_Boxes.getDisplayName())) {
+								locationsAffected = "All EON Locations";
+							} else if (HierarchySelected.endsWith(Massive_TV_Outage.ALL_Satellite_Boxes.getDisplayName())) {
+								locationsAffected = "All Satellite Dish Locations";
+							}
+						} else {
+							// Concatenate locations with comma
+							locationsAffected = String.join(", ", uniqueLocationsSet);
+						}
 
 						// If it is for Nova add "Nova_" prefix for all OutageIDs
 						String OutageId_Prefix = "";
@@ -1137,9 +1264,9 @@ public class WebSpectra implements InterfaceWebSpectra
 
 						// Production of the CSV Exported File for the Closed Incident.
 						// TODO: Fix Export to CSV.
-						OpenningIncidentOutageToCSV OIATCSV = new OpenningIncidentOutageToCSV(dbOps, s_dbOps, IncidentID,
-								OutageID_String);
-						OIATCSV.produceReport();
+//						OpenningIncidentOutageToCSV OIATCSV = new OpenningIncidentOutageToCSV(dbOps, s_dbOps, IncidentID,
+//								OutageID_String);
+//						OIATCSV.produceReport();
 
 						logger.info(req.getRemoteAddr() + " - ReqID: " + RequestID + " - Submitted Outage: INCID: "
 								+ IncidentID + " | OutageID: " + OutageID_String);
@@ -1153,19 +1280,19 @@ public class WebSpectra implements InterfaceWebSpectra
 			throw e;
 		} finally
 		{
-
+			// TODO: Fix Similar Request towards Spectra Reporting
 			// Send Similar request to Spectra_Reporting server ONLY for WIND requests
-			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
-				try {
-					Async_SubmitOutage sOut = new Async_SubmitOutage(UserName, Password, RequestID, RequestTimestamp,
-							SystemID, UserID, IncidentID, Scheduled, StartTime, EndTime, Duration, AffectedServices, Impact,
-							Priority, HierarchySelected);
-					sOut.run();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+//			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
+//				try {
+//					Async_SubmitOutage sOut = new Async_SubmitOutage(UserName, Password, RequestID, RequestTimestamp,
+//							SystemID, UserID, IncidentID, Scheduled, StartTime, EndTime, Duration, AffectedServices, Impact,
+//							Priority, HierarchySelected);
+//					sOut.run();
+//				} catch (Exception e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
 			try
 			{
 				logger.trace(

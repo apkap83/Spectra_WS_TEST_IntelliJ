@@ -71,14 +71,14 @@ public class ProductOfGetHierarchy
 		if (this.hierarchyProvided == null || this.hierarchyProvided.equals("") || this.hierarchyProvided.equals("?"))
 		{
 			// System.out.println("APOSTOLIS PRODUCT HERE 1");
-		} else
+		}
+		else
 		{
 			// If hierarchyProvided is not null and has > 1 level hierarchy e.g.
 			// FTTX->OltElementName
-			if (this.hierElements.length > 1)
-			{
+			if (this.hierElements.length > 1) {
 				// Determine if db connection is towards WInd or Nova database
-				if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")){
+				if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
 					novaTableNamePrefix = "";
 				} else {
 					novaTableNamePrefix = "Nova_";
@@ -90,50 +90,84 @@ public class ProductOfGetHierarchy
 				// Firstly determine the hierarchy table that will be used based on the root
 				// hierarchy provided
 				String dataSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "DataSubscribersTableName",
-						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
+						new String[]{"RootHierarchyNode"}, new String[]{rootElement}, new String[]{"String"});
 
 				String voiceSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "VoiceSubscribersTableName",
-						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
+						new String[]{"RootHierarchyNode"}, new String[]{rootElement}, new String[]{"String"});
 
 				String IPTVSubsTable = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "IPTVSubscribersTableName",
-						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
+						new String[]{"RootHierarchyNode"}, new String[]{rootElement}, new String[]{"String"});
 
 				// Secondly determine NGA_TYPE based on rootElement
 				String ngaTypes = dbs.getOneValue(novaTableNamePrefix + "HierarchyTablePerTechnology2", "NGA_TYPE",
-						new String[] { "RootHierarchyNode" }, new String[] { rootElement }, new String[] { "String" });
+						new String[]{"RootHierarchyNode"}, new String[]{rootElement}, new String[]{"String"});
 
 				// Calculate data Customers Affected but replace column names in order to
 				// search table for customers affected
 
-				String dataCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
-						new String[] { "PASPORT_COID" },
-						hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						ngaTypes);
 
-				this.dataCustomersAffected = dataCustomersAffected;
+				// Case the Hiearchy starts with 'Massive_TV_Outage'
+				if (this.hierarchyProvided.startsWith(Massive_TV_Outage.Massive_TV_Outage.getDisplayName())) {
 
-				// Calculate Voice Customers Affected but replace column names in order to
-				// search table for customers affected
-				String voiceCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
-						new String[] { "PASPORT_COID" },
-						hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullVoiceHierarchyPath)),
-						hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullVoiceHierarchyPath)),
-						hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullVoiceHierarchyPath)),
-						ngaTypes);
+					this.voiceCustomersAffected = "0";
+					this.dataCustomersAffected = "0";
 
-				this.voiceCustomersAffected = voiceCustomersAffected;
+					String tvCustomersAffected = "0";
+					// All EON Boxes
+					if (this.hierarchyProvided.endsWith(Massive_TV_Outage.ALL_EON_Boxes.getDisplayName())) {
 
-				// Commented Temporarily to reduce burden of Get Hierarchy Queries
-				// Calculate CLIs Affected but replace column names in order to search table for
-				// customers affected
+						tvCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+								new String[]{"TV_ID"},
+								new String[]{"TV_Service"},
+								new String[]{"OTT"},
+								new String[]{"String"},
+								ngaTypes);
+
+						// All Satellite Boxes
+					} else if (this.hierarchyProvided.endsWith(Massive_TV_Outage.ALL_Satellite_Boxes.getDisplayName())) {
+
+						tvCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+								new String[]{"TV_ID"},
+								new String[]{"TV_Service"},
+								new String[]{"DTH"},
+								new String[]{"String"},
+								ngaTypes);
+					}
+
+
+					this.tvCustomersAffected = tvCustomersAffected;
+
+				} else {
+
+					String dataCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(dataSubsTable,
+							new String[]{"PASPORT_COID"},
+							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							ngaTypes);
+
+					this.dataCustomersAffected = dataCustomersAffected;
+
+					// Calculate Voice Customers Affected but replace column names in order to
+					// search table for customers affected
+					String voiceCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(voiceSubsTable,
+							new String[]{"PASPORT_COID"},
+							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullVoiceHierarchyPath)),
+							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullVoiceHierarchyPath)),
+							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullVoiceHierarchyPath)),
+							ngaTypes);
+
+					this.voiceCustomersAffected = voiceCustomersAffected;
+
+					// Commented Temporarily to reduce burden of Get Hierarchy Queries
+					// Calculate CLIs Affected but replace column names in order to search table for
+					// customers affected
 				/*
 				String CLIsAffected = dbs.countDistinctCLIsAffected(new String[] { "PASPORT_COID" },
 						Help_Func.hierarchyKeys(Help_Func.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
@@ -147,25 +181,26 @@ public class ProductOfGetHierarchy
 				this.CLIsAffected = String.valueOf(CLIsAffected);
 				*/
 
-				this.CLIsAffected = "0";
+					this.CLIsAffected = "0";
 
-				// Calculate IPTV Customers Affected but replace column names in order to search table for
-				// customers affected
-				String tvCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
-						new String[] { "PASPORT_COID" },
-						hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
-								fullDataHierarchyPath)),
-						ngaTypes);
+					// Calculate IPTV Customers Affected but replace column names in order to search table for
+					// customers affected
+					String tvCustomersAffected = dbs.countDistinctRowsForSpecificColumnsNGAIncluded(IPTVSubsTable,
+							new String[]{"PASPORT_COID"},
+							hf.hierarchyKeys(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							hf.hierarchyValues(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							hf.hierarchyStringTypes(hf.replaceHierarchyForSubscribersAffected(this.hierarchyProvided,
+									fullDataHierarchyPath)),
+							ngaTypes);
 
-				this.tvCustomersAffected = tvCustomersAffected;
+					this.tvCustomersAffected = tvCustomersAffected;
 
-				// Calculate this
-				this.activeDataCustomersAffected = "0";
-				// this.tvCustomersAffected = "0";
+					// Calculate this
+					this.activeDataCustomersAffected = "0";
+					// this.tvCustomersAffected = "0";
+				}
 			}
 		}
 		// Ability To Export SQL Resultset to exported File
