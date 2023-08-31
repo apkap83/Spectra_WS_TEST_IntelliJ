@@ -103,7 +103,7 @@ public class ProductOfGetHierarchy
 						new String[]{"RootHierarchyNode"}, new String[]{rootElement}, new String[]{"String"});
 
 				// Calculate data Customers Affected but replace column names in order to
-				// search table for customers affected
+				// Search table for customers affected
 
 
 				// Case the Hiearchy starts with 'Massive_TV_Outage'
