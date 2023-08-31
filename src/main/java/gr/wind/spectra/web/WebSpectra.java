@@ -2355,52 +2355,65 @@ public class WebSpectra implements InterfaceWebSpectra
 			}
 
 
-			// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
+			// Check if the value provided in CliValue field is a CLI or a TV_ID
+			// It is a TV_ID
+			if (CLI.contains("-") || !CLI.startsWith("2")) {
+				// It is a TV_ID...
 
-			// Search if it is WIND subscriber
-			if (dbs != null && s_dbs != null) {
 
-				try {
-					boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
-						"CliValue", CLI);
 
-					// WIND Subscriber
-					if (foundInWind) {
-						subscriberFoundForWind = true;
-						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
-						ponla = co.checkCLIOutage(RequestID, CLI, Service);
-						return ponla;
-					}
-				}
-				catch (Exception e) {
-					logger.error("NLU_Active: Problem while retrieving data from Wind DB !");
-					e.printStackTrace();
-				}
-			}
+			} else {
+				// It is a CLI Value...
 
-			// Search if it is Nova subscriber
-			if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
-				try {
-					boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
-							"CliValue", CLI);
-					if (foundInNova) { // NOVA Subscriber
-						Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
-						ponla = co.checkCLIOutage(RequestID, CLI, Service);
-						return ponla;
-					} else {
-						// Cli Not Found then Assume WIND operations
-						if (dbs != null && s_dbs != null) {
-							subscriberFoundForWind = true; // Assume Wind for Reporting server request
-							Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
+				// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
+
+				// Search if it is WIND subscriber
+				if (dbs != null && s_dbs != null) {
+
+					try {
+						boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
+								"CliValue", CLI);
+
+						// WIND Subscriber
+						if (foundInWind) {
+							subscriberFoundForWind = true;
+							Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
 							ponla = co.checkCLIOutage(RequestID, CLI, Service);
+							return ponla;
 						}
 					}
+					catch (Exception e) {
+						logger.error("NLU_Active: Problem while retrieving data from Wind DB !");
+						e.printStackTrace();
+					}
 				}
-				catch (Exception e) {
-					logger.error("NLU_Active: Problem while retrieving data from Nova DB !");
-					e.printStackTrace();
+
+				// Search if it is Nova subscriber
+				if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
+					try {
+						boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
+								"CliValue", CLI);
+						if (foundInNova) { // NOVA Subscriber
+							Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
+							ponla = co.checkCLIOutage(RequestID, CLI, Service);
+							return ponla;
+						} else {
+							// Cli Not Found then Assume WIND operations
+							if (dbs != null && s_dbs != null) {
+								subscriberFoundForWind = true; // Assume Wind for Reporting server request
+								Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
+								ponla = co.checkCLIOutage(RequestID, CLI, Service);
+							}
+						}
+					}
+					catch (Exception e) {
+						logger.error("NLU_Active: Problem while retrieving data from Nova DB !");
+						e.printStackTrace();
+					}
 				}
 			}
+
+
 
 		} catch (Exception e)
 		{
