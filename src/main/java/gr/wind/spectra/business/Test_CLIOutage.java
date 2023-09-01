@@ -318,6 +318,14 @@ public class Test_CLIOutage
 					String OutageMsg = rs.getString("OutageMsg");
 					String BackupEligible = rs.getString("BackupEligible");
 
+
+					// Ignore Massive Outage Hierarchies
+					if (HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_Satellite_Boxes") ||
+							HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_EON_Boxes")) {
+						continue;
+					}
+
+
 					// If it is OPEN & Scheduled & Date(Now) > StartTime then set
 					// isOutageWithinScheduledRange to TRUE
 					if (Scheduled.equals("Yes"))
