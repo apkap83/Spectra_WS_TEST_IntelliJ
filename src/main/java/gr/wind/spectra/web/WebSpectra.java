@@ -1277,19 +1277,18 @@ public class WebSpectra implements InterfaceWebSpectra
 			throw e;
 		} finally
 		{
-			// TODO: Fix Similar Request towards Spectra Reporting
 			// Send Similar request to Spectra_Reporting server ONLY for WIND requests
-//			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
-//				try {
-//					Async_SubmitOutage sOut = new Async_SubmitOutage(UserName, Password, RequestID, RequestTimestamp,
-//							SystemID, UserID, IncidentID, Scheduled, StartTime, EndTime, Duration, AffectedServices, Impact,
-//							Priority, HierarchySelected);
-//					sOut.run();
-//				} catch (Exception e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
+			if (dbOps != null && dbOps.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
+				try {
+					Async_SubmitOutage sOut = new Async_SubmitOutage(UserName, Password, RequestID, RequestTimestamp,
+							SystemID, UserID, IncidentID, Scheduled, StartTime, EndTime, Duration, AffectedServices, Impact,
+							Priority, HierarchySelected);
+					sOut.run();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			try
 			{
 				logger.trace(
@@ -2354,21 +2353,21 @@ public class WebSpectra implements InterfaceWebSpectra
 				hf.validateDelimitedValues("Service", Service, "\\|", new String[] { "Voice", "Data", "IPTV" });
 			}
 
+			// Search if it is WIND subscriber
+			if (dbs != null && s_dbs != null) {
 
-			// Check if the value provided in CliValue field is a CLI or a TV_ID
-			// It is a TV_ID
-			if (CLI.contains("-") || !CLI.startsWith("2")) {
-				// It is a TV_ID...
-				Test_Outage_For_Massive_TV tofmt = new Test_Outage_For_Massive_TV(dbs, s_dbs, RequestID, SystemID);
-				ponla = tofmt.checkMassiveTVOutage(RequestID, CLI);
-				return ponla;
-			} else {
-				// It is a CLI Value...
+				// Check if the value provided in CliValue field is a CLI or a TV_ID
+				// It is a TV_ID
+				if (CLI.contains("-") || !CLI.startsWith("2")) {
+					// It is a TV_ID...
+					Test_Outage_For_Massive_TV tofmt = new Test_Outage_For_Massive_TV(dbs, s_dbs, RequestID, SystemID);
+					ponla = tofmt.checkMassiveTVOutage(RequestID, CLI);
+					return ponla;
+				} else {
+					// It is a CLI Value...
 
-				// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
+					// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
 
-				// Search if it is WIND subscriber
-				if (dbs != null && s_dbs != null) {
 
 					try {
 						boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
@@ -2381,13 +2380,13 @@ public class WebSpectra implements InterfaceWebSpectra
 							ponla = co.checkCLIOutage(RequestID, CLI, Service);
 							return ponla;
 						}
-					}
-					catch (Exception e) {
+					} catch (Exception e) {
 						logger.error("NLU_Active: Problem while retrieving data from Wind DB !");
 						e.printStackTrace();
 					}
 				}
 
+			}
 				// Search if it is Nova subscriber
 				if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
 					try {
@@ -2411,7 +2410,7 @@ public class WebSpectra implements InterfaceWebSpectra
 						e.printStackTrace();
 					}
 				}
-			}
+
 
 
 
@@ -2433,7 +2432,7 @@ public class WebSpectra implements InterfaceWebSpectra
 			}
 			try
 			{
-				logger.trace(req.getRemoteAddr() + " - ReqID: " + RequestID + " - Close Outage: Closing DB Connection");
+				logger.trace(req.getRemoteAddr() + " - ReqID: " + RequestID + " - NLU Active: Closing DB Connection");
 				if (conObj != null)
 				{
 					conObj.closeDBConnection();

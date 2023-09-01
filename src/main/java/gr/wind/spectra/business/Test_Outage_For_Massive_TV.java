@@ -58,13 +58,18 @@ public class Test_Outage_For_Massive_TV {
 
 
 		// Check if TV_ID Exists in our Database
-		boolean TV_ID_Found_in_Satellite = dbs.checkIfStringExistsInSpecificColumn("OTT_DTH_Data",
+		boolean TV_ID_Found_in_DB = dbs.checkIfStringExistsInSpecificColumn("OTT_DTH_Data",
 				"TV_ID", TV_ID);
 
 		// If it doesn't exist then Exit
-		if (!TV_ID_Found_in_Satellite) {
+		if (!TV_ID_Found_in_DB) {
 			logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - TV_ID: "
 					+ TV_ID + " was not found in Table: OTT_DTH_Data");
+
+			// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
+			Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, "", "", "", "", "",
+					RequestID, systemID, "Nova");
+			ucdt.run();
 
 			return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 					"none", "none", "none", "NULL", "NULL", "NULL");
@@ -250,7 +255,7 @@ public class Test_Outage_For_Massive_TV {
 					+ OutageMsg + " | " + BackupEligible);
 
 			// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
-				Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "DTH", Scheduled, OutageMsg, BackupEligible,
+			Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "DTH", Scheduled, OutageMsg, BackupEligible,
 					RequestID, systemID, "Nova");
 			ucdt.run();
 
@@ -270,12 +275,8 @@ public class Test_Outage_For_Massive_TV {
 		}
 		}
 
-		dbs = null;
-		s_dbs = null;
-		requestID = null;
-
 		// Default No Outage for TV_ID
-		logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - No Service affection for TV_ID: "
+		logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - No Service affection for " + TypeOfTV_ID + " TV_ID: "
 				+ TV_ID);
 
 		// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
@@ -285,6 +286,10 @@ public class Test_Outage_For_Massive_TV {
 
 		// Update Statistics
 		s_dbs.updateUsageStatisticsForMethod("NLU_Active_Neg");
+
+		dbs = null;
+		s_dbs = null;
+		requestID = null;
 
 		return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 				"none", "none", "none", "NULL", "NULL", "NULL");

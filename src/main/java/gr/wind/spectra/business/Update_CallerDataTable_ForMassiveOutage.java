@@ -41,14 +41,6 @@ public class Update_CallerDataTable_ForMassiveOutage extends Thread
 		this.systemID = systemID;
 		this.Company = Company;
 
-
-		// Check if Export is for Nova or Wind
-		if (dbs.getClass().toString().equals("class gr.wind.spectra.business.DB_Operations")) {
-			this.tablePrefix = windTableNamePrefix;
-		} else if (dbs.getClass().toString().equals("class gr.wind.spectra.business.TnovaDynamicDBOperations")) {
-			this.tablePrefix = novaTableNamePrefix;
-
-		}
 	}
 
 	@Override
@@ -61,9 +53,21 @@ public class Update_CallerDataTable_ForMassiveOutage extends Thread
 			message = "";
 		}
 
+		System.out.println("systemID = " + systemID);
+		System.out.println("CLIProvided = " + CLIProvided);
+		System.out.println("IncidentID = " + IncidentID);
+		System.out.println("allAffectedServices = " + allAffectedServices);
+		System.out.println("foundScheduled = " + foundScheduled);
+		System.out.println("message = " + message);
+		System.out.println("backupEligible = " + backupEligible);
+
+		if (s_dbs == null) {
+			System.out.println("s_dbs here is null!");
+		}
+
 		try
 		{
-				s_dbs.insertValuesInTable(tablePrefix + "Test_Caller_Data",
+				s_dbs.insertValuesInTable("Test_Caller_Data",
 						new String[] { "Requestor", "CliValue", "DateTimeCalled", "Affected_by_IncidentID",
 								"AffectedServices", "Scheduled", "Message", "BackupEligible", "CSSCOLLECTIONNAME",
 								"PAYTVSERVICES", "NGA_TYPE", "GeneralArea", "SiteName", "Concentrator", "AccessService",
@@ -82,7 +86,7 @@ public class Update_CallerDataTable_ForMassiveOutage extends Thread
 								"String" });
 
 				SendRequestToCDRDBNOTFoundCLI();
-		} catch (SQLException e)
+		} catch (Exception e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
