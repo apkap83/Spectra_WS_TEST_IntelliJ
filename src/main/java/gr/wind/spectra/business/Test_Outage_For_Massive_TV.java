@@ -55,6 +55,8 @@ public class Test_Outage_For_Massive_TV {
 
 		Help_Func hf = new Help_Func();
 
+
+
 		// Check if TV_ID Exists in our Database
 		boolean TV_ID_Found_in_Satellite = dbs.checkIfStringExistsInSpecificColumn("OTT_DTH_Data",
 				"TV_ID", TV_ID);
@@ -158,6 +160,19 @@ public class Test_Outage_For_Massive_TV {
 						+ " | OutageID: " + OutageID + " | " + "IPTV" + " | "
 						+ OutageMsg + " | " + BackupEligible);
 
+				// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
+				Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "OTT", Scheduled, OutageMsg, BackupEligible,
+						RequestID, systemID, "Nova");
+				ucdt.run();
+
+				// Update asynchronously Test_Stats_Pos_NLU_Requests to count number of successful NLU requests per CLI
+				Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs, systemID, IncidentID,
+						"OTT", Scheduled, TV_ID);
+				uRat.run();
+
+				// Update Statistics
+				s_dbs.updateUsageStatisticsForMethod("NLU_Active_Pos_IPTV");
+
 				return new ProductOfNLUActive(this.requestID, TV_ID, "Yes", IncidentID, "Critical",
 						"IPTV", Scheduled, Duration, EndTimeString, Impact, OutageMsg, BackupEligible, "NULL");
 			} catch (Exception e) {
@@ -234,6 +249,19 @@ public class Test_Outage_For_Massive_TV {
 					+ " | OutageID: " + OutageID + " | " + outageAffectedService + " | "
 					+ OutageMsg + " | " + BackupEligible);
 
+			// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
+				Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "DTH", Scheduled, OutageMsg, BackupEligible,
+					RequestID, systemID, "Nova");
+			ucdt.run();
+
+			// Update asynchronously Test_Stats_Pos_NLU_Requests to count number of successful NLU requests per CLI
+			Update_ReallyAffectedTable uRat = new Update_ReallyAffectedTable(s_dbs, systemID, IncidentID,
+					"DTH", Scheduled, TV_ID);
+			uRat.run();
+
+			// Update Statistics
+			s_dbs.updateUsageStatisticsForMethod("NLU_Active_Pos_IPTV");
+
 			return new ProductOfNLUActive(this.requestID, TV_ID, "Yes", IncidentID, "Critical",
 					"IPTV", Scheduled, Duration, EndTimeString, Impact, OutageMsg, BackupEligible, "NULL");
 
@@ -246,10 +274,17 @@ public class Test_Outage_For_Massive_TV {
 		s_dbs = null;
 		requestID = null;
 
-
 		// Default No Outage for TV_ID
 		logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - No Service affection for TV_ID: "
 				+ TV_ID);
+
+		// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
+		Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, "", "", "", "", "",
+				RequestID, systemID, "Nova");
+		ucdt.run();
+
+		// Update Statistics
+		s_dbs.updateUsageStatisticsForMethod("NLU_Active_Neg");
 
 		return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 				"none", "none", "none", "NULL", "NULL", "NULL");
