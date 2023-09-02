@@ -2359,6 +2359,7 @@ public class WebSpectra implements InterfaceWebSpectra
 				// Check if the value provided in CliValue field is a CLI or a TV_ID
 				// It is a TV_ID
 				if (CLI.contains("-") || !CLI.startsWith("2")) {
+					subscriberFoundForWind = true; // for the request to continue to Spectra Reporting Also
 					// It is a TV_ID...
 					Test_Outage_For_Massive_TV tofmt = new Test_Outage_For_Massive_TV(dbs, s_dbs, RequestID, SystemID);
 					ponla = tofmt.checkMassiveTVOutage(RequestID, CLI);
@@ -2367,8 +2368,6 @@ public class WebSpectra implements InterfaceWebSpectra
 					// It is a CLI Value...
 
 					// Check if CliValue is found in WIND or Nova Databases (Table Cli_Mappings that exists in both DBs)
-
-
 					try {
 						boolean foundInWind = dbs.checkIfStringExistsInSpecificColumn("Cli_Mappings",
 								"CliValue", CLI);

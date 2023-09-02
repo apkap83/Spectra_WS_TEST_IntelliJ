@@ -40,7 +40,6 @@ public class Test_Outage_For_Massive_TV {
 		this.s_dbs = s_dbs;
 		this.requestID = requestID;
 		this.systemID = systemID;
-
 	}
 
 	public ProductOfNLUActive checkMassiveTVOutage(String RequestID, String TV_ID)
@@ -54,8 +53,6 @@ public class Test_Outage_For_Massive_TV {
 		String allAffectedServices = "";
 
 		Help_Func hf = new Help_Func();
-
-
 
 		// Check if TV_ID Exists in our Database
 		boolean TV_ID_Found_in_DB = dbs.checkIfStringExistsInSpecificColumn("OTT_DTH_Data",
@@ -71,6 +68,9 @@ public class Test_Outage_For_Massive_TV {
 					RequestID, systemID, "Nova");
 			ucdt.run();
 
+			// Update Statistics
+			s_dbs.updateUsageStatisticsForMethod("NLU_Active_Neg");
+
 			return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 					"none", "none", "none", "NULL", "NULL", "NULL");
 		}
@@ -85,6 +85,14 @@ public class Test_Outage_For_Massive_TV {
 		if (!TypeOfTV_ID.equals("OTT") && !TypeOfTV_ID.equals("DTH")) {
 			logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - TV_ID: "
 					+ TV_ID + " has TV_Service: " + TypeOfTV_ID + " - Expected OTT or DTH Only - Aborting Check");
+
+			// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
+			Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, "", "", "", "", "",
+					RequestID, systemID, "Nova");
+			ucdt.run();
+
+			// Update Statistics
+			s_dbs.updateUsageStatisticsForMethod("NLU_Active_Neg");
 
 			return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 					"none", "none", "none", "NULL", "NULL", "NULL");
@@ -109,12 +117,8 @@ public class Test_Outage_For_Massive_TV {
 								"StartTime", "EndTime", "Impact", "OutageMsg"},
 						new String[]{"HierarchySelected"}, new String[]{OTT_OUTAGE_HIERARCHY}, new String[]{"String"});
 
-				String WillBePublished = null;
 				String IncidentID = null;
 				int OutageID = 0;
-				String HierarchySelected = null;
-				String Priority = null;
-				String outageAffectedService = null;
 				String Scheduled = null;
 				String Duration = null;
 				Date StartTime = null;
@@ -124,12 +128,8 @@ public class Test_Outage_For_Massive_TV {
 				String BackupEligible = null;
 
 				while (rs.next()) {
-					WillBePublished = rs.getString("WillBePublished");
 					IncidentID = rs.getString("IncidentID");
 					OutageID = rs.getInt("OutageID");
-					HierarchySelected = rs.getString("HierarchySelected");
-					Priority = rs.getString("Priority");
-					outageAffectedService = rs.getString("AffectedServices");
 					Scheduled = rs.getString("Scheduled");
 					Duration = rs.getString("Duration");
 					StartTime = rs.getTimestamp("StartTime");
@@ -198,11 +198,8 @@ public class Test_Outage_For_Massive_TV {
 							"StartTime", "EndTime", "Impact", "OutageMsg"},
 					new String[]{"HierarchySelected"}, new String[]{SATELLITE_OUTAGE_HIERARCHY}, new String[]{"String"});
 
-			String WillBePublished = null;
 			String IncidentID = null;
 			int OutageID = 0;
-			String HierarchySelected = null;
-			String Priority = null;
 			String outageAffectedService = null;
 			String Scheduled = null;
 			String Duration = null;
@@ -213,11 +210,8 @@ public class Test_Outage_For_Massive_TV {
 			String BackupEligible = null;
 
 			while (rs.next()) {
-				WillBePublished = rs.getString("WillBePublished");
 				IncidentID = rs.getString("IncidentID");
 				OutageID = rs.getInt("OutageID");
-				HierarchySelected = rs.getString("HierarchySelected");
-				Priority = rs.getString("Priority");
 				outageAffectedService = rs.getString("AffectedServices");
 				Scheduled = rs.getString("Scheduled");
 				Duration = rs.getString("Duration");
@@ -286,10 +280,6 @@ public class Test_Outage_For_Massive_TV {
 
 		// Update Statistics
 		s_dbs.updateUsageStatisticsForMethod("NLU_Active_Neg");
-
-		dbs = null;
-		s_dbs = null;
-		requestID = null;
 
 		return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
 				"none", "none", "none", "NULL", "NULL", "NULL");

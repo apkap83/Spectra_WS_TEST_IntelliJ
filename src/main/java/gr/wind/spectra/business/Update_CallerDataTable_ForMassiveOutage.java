@@ -73,11 +73,90 @@ public class Update_CallerDataTable_ForMassiveOutage extends Thread
 								"String", "String", "String", "String", "String", "String", "String", "String",
 								"String" });
 
+			if (IncidentID != null && !IncidentID.isEmpty()) {
 				SendRequestToCDRDBNOTFoundCLI();
+			}else {
+				SendRequestToCDRDBFoundCLI("","","","","","","","");
+			}
 		} catch (Exception e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	private void SendRequestToCDRDBFoundCLI(String Username, String PAYTVSERVICES, String CSSCOLLECTIONNAME,
+											String AccessService, String CLID, String ActiveElement, String BRASNAME, String PASPORT_COID)
+	{
+		// How do I call some blocking method with a timeout in Java?
+		// https://stackoverflow.com/questions/1164301/how-do-i-call-some-blocking-method-with-a-timeout-in-java
+
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Callable<Object> task = new Callable<Object>()
+		{
+			@Override
+			public Object call() throws Exception
+			{
+				// ****************************************************
+				// Send request CDR DB for Archiving the Caller request
+				// *****************************************************
+				try
+				{
+					WebCDRDBService myWebService = new WebCDRDBService();
+					gr.wind.spectra.cdrdbconsumernova.InterfaceWebCDRDB iws = myWebService.getWebCDRDBPort();
+
+					InsertCallerData icd = new InsertCallerData();
+
+					icd.setRequestID(requestID);
+					icd.setCompany(Company);
+					icd.setUsername(Username);
+					icd.setCli(CLIProvided);
+					icd.setIncidentNumber(IncidentID);
+					icd.setAffectedServices(allAffectedServices);
+					icd.setPayTVServices(PAYTVSERVICES);
+					icd.setIsScheduled(foundScheduled);
+					icd.setBackupElegible(backupEligible);
+					icd.setCSSCollectionName(CSSCOLLECTIONNAME);
+					icd.setAccessService(AccessService);
+					icd.setCLID(CLID);
+					icd.setActiveElement(ActiveElement);
+					icd.setBRASName(BRASNAME);
+					icd.setCOID(PASPORT_COID);
+					icd.setAPIUser("spectra");
+					icd.setAPIProcess(systemID);
+
+					iws.insertCallerData(icd, "spectra", "YtfLwvEuCAly9fJS6R46");
+
+				} catch (Exception e)
+				{
+
+					e.printStackTrace();
+				}
+				return null;
+
+			};
+
+		};
+
+		Future<Object> future = executor.submit(task);
+		try
+		{
+			Object result = future.get(300, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException ex)
+		{
+			// handle the timeout
+			System.out.println("Update_CallerDataTable TimeoutException for CDRDB Insert Statement: " + requestID);
+		} catch (InterruptedException e)
+		{
+			// handle the interrupts
+			System.out.println("Update_CallerDataTable InterruptedException for CDRDB Insert Statement: " + requestID);
+		} catch (ExecutionException e)
+		{
+			// handle other exceptions
+			System.out.println("Update_CallerDataTable ExecutionException for CDRDB Insert Statement: " + requestID);
+		} finally
+		{
+			future.cancel(true); // may or may not desire this
 		}
 	}
 
@@ -154,5 +233,6 @@ public class Update_CallerDataTable_ForMassiveOutage extends Thread
 			future.cancel(true); // may or may not desire this
 		}
 	}
+
 
 }
