@@ -2098,7 +2098,7 @@ public class WebSpectra implements InterfaceWebSpectra
 
 						// Get Hierarchy of the Outage in order to check if it is Massive_TV_Outage
 						String HierarchySelectedOfOutage = s_dbOps.getOneValue(tablePrefix + "Test_SubmittedIncidents", "HierarchySelected",
-								new String[] { "IncidentID", "OutageID" }, new String[] { IncidentID, OutageID },
+								new String[] { "IncidentID", "OutageID" }, new String[] { IncidentID, OutageID.replace("Nova_", "") },
 								new String[] { "String", "String" });
 
 						// Production of the CSV Exported File for the Closed Incident - Except for Massive_TV_Outage hierarchies
