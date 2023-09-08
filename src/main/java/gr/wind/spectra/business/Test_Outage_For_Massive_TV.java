@@ -98,13 +98,13 @@ public class Test_Outage_For_Massive_TV {
 					"none", "none", "none", "NULL", "NULL", "NULL");
 		}
 
-		// Check if we have Open EON TV Outage Incident
-		boolean weHaveMassiveEONIncident = s_dbs.checkIfCriteriaExists("Test_SubmittedIncidents", new String[]{"IncidentStatus", "HierarchySelected"},
-				new String[]{"OPEN", OTT_OUTAGE_HIERARCHY}, new String[]{"String", "String"});
+		// Check if we have Open EON TV Outage Incident and Will-Be-Published Yes for IPTV Service
+		boolean weHaveMassiveEONIncident = s_dbs.checkIfCriteriaExists("Test_SubmittedIncidents", new String[]{"IncidentStatus", "HierarchySelected", "WillBePublished" , "AffectedServices"},
+				new String[]{"OPEN", OTT_OUTAGE_HIERARCHY, "Yes", "IPTV"}, new String[]{"String", "String", "String", "String"});
 
-		// Check if we have Open Satellite TV Outage Incident
-		boolean weHaveMassiveSatelliteIncident = s_dbs.checkIfCriteriaExists("Test_SubmittedIncidents", new String[]{"IncidentStatus", "HierarchySelected"},
-				new String[]{"OPEN", SATELLITE_OUTAGE_HIERARCHY}, new String[]{"String", "String"});
+		// Check if we have Open Satellite TV Outage Incident and Will-Be-Published Yes for IPTV Service
+		boolean weHaveMassiveSatelliteIncident = s_dbs.checkIfCriteriaExists("Test_SubmittedIncidents", new String[]{"IncidentStatus", "HierarchySelected", "WillBePublished" , "AffectedServices"},
+				new String[]{"OPEN", SATELLITE_OUTAGE_HIERARCHY, "Yes", "IPTV"}, new String[]{"String", "String", "String", "String"});
 
 		if (TypeOfTV_ID.equals("OTT") && weHaveMassiveEONIncident) {
 
