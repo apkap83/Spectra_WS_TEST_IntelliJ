@@ -219,8 +219,7 @@ public class Test_CLIOutage
 	}
 
 	public ProductOfNLUActive checkCLIOutage(String RequestID, String CLIProvided, String ServiceType)
-			throws SQLException, InvalidInputException, ParseException
-	{
+			throws Exception {
 		String Company = "UNKNOWN";
 
 		ProductOfNLUActive ponla = new ProductOfNLUActive();
@@ -289,6 +288,7 @@ public class Test_CLIOutage
 			String EndTimeString = null;
 			String foundOutageMsg = "";
 			String foundFlag2_BackupEligible = "";
+			ProductOfNLUActive tofmTV_Result = null;
 
 			for (String service : ServiceTypeSplitted)
 			{
@@ -317,14 +317,6 @@ public class Test_CLIOutage
 					String Impact = rs.getString("Impact");
 					String OutageMsg = rs.getString("OutageMsg");
 					String BackupEligible = rs.getString("BackupEligible");
-
-
-					// Ignore Massive Outage Hierarchies
-					if (HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_Satellite_Boxes") ||
-							HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_EON_Boxes")) {
-						continue;
-					}
-
 
 					// If it is OPEN & Scheduled & Date(Now) > StartTime then set
 					// isOutageWithinScheduledRange to TRUE
@@ -374,6 +366,69 @@ public class Test_CLIOutage
 						}
 						*/
 					}
+
+
+
+
+					// If it is a Massive TV Outage Hierarchy then convert Cli to TV_ID and use Test_Outage_For_Massive_TV Classs
+					if (service.equals("IPTV")) {
+						if (HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_Satellite_Boxes") ||
+								HierarchySelected.equals("Massive_TV_Outage->TV_Service=ALL_EON_Boxes")
+
+						) {
+
+							if (WillBePublished.equals("No")) {
+								continue;
+							}
+
+							// Check if Cli Value Exists in our Database
+							if (!dbs.checkIfStringExistsInSpecificColumn("OTT_DTH_Data", "CLI_FIXED", CLIProvided)) {
+								continue;
+							}
+
+							// Get the Value of TV_Service for that TV_ID - Possible Values: OTT or DTH
+							String TV_ID = dbs.getOneValue("OTT_DTH_Data", "TV_ID", new String[]{"CLI_FIXED"}, new String[]{CLIProvided}, new String[]{"String"});
+							TV_ID = TV_ID.trim();
+
+							if (TV_ID == null || TV_ID.isEmpty()) {
+								logger.warn("SysID: " + systemID + " ReqID: " + RequestID + " - TV_ID is not defined in OTT_DTH_Data Table for Cli Value: "
+										+ CLIProvided);
+								continue;
+							}
+
+							logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - Converting CLI: " + CLIProvided + " --> TV_ID: " + TV_ID);
+
+							Test_Outage_For_Massive_TV tofmTV = new Test_Outage_For_Massive_TV(dbs, s_dbs, RequestID, systemID);
+							tofmTV_Result = tofmTV.checkMassiveTVOutage(RequestID, TV_ID);
+
+							// If
+							if (tofmTV_Result.getAffected().equals("Yes")) {
+								if (Scheduled.equals("No") || (Scheduled.equals("Yes") && isOutageWithinScheduledRange)) {
+									foundIncidentID = IncidentID;
+									foundPriority = Priority;
+									foundScheduled = Scheduled;
+									foundDuration = Duration;
+									foundStartTime = StartTime;
+									foundEndTime = EndTime;
+									foundImpact = Impact;
+									foundOutageMsg = OutageMsg;
+									foundFlag2_BackupEligible = BackupEligible;
+
+									foundAtLeastOneCLIAffected = true;
+									iptvAffected = true;
+									logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - Found Affected CLI: "
+											+ CLIProvided + " -> TV_ID: " + TV_ID + " | " + "IPTV" + " from Massive Scheduled INC: " + IncidentID
+											+ " | OutageID: " + OutageID + " | " + outageAffectedService + " | "
+											+ foundOutageMsg + " | " + BackupEligible);
+								}
+
+							}
+
+							// Do not perform the rest of the below checks for those 2 Massive Hierarchies
+							break;
+						}
+					}
+
 
 					// if service given in web request is Voice
 					if (outageAffectedService.equals("Voice") && service.equals("Voice"))
