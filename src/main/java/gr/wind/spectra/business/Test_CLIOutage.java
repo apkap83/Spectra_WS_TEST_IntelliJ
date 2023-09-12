@@ -386,7 +386,7 @@ public class Test_CLIOutage
 								continue;
 							}
 
-							// Get the Value of TV_Service for that TV_ID - Possible Values: OTT or DTH
+							// Get the Value of TV_ID for that CLI Value
 							String TV_ID = dbs.getOneValue("OTT_DTH_Data", "TV_ID", new String[]{"CLI_FIXED"}, new String[]{CLIProvided}, new String[]{"String"});
 							TV_ID = TV_ID.trim();
 
@@ -401,7 +401,7 @@ public class Test_CLIOutage
 							Test_Outage_For_Massive_TV tofmTV = new Test_Outage_For_Massive_TV(dbs, s_dbs, RequestID, systemID);
 							tofmTV_Result = tofmTV.checkMassiveTVOutage(RequestID, TV_ID);
 
-							// If
+							// If There is Massive TV Service Affection Then Publish it
 							if (tofmTV_Result.getAffected().equals("Yes")) {
 								if (Scheduled.equals("No") || (Scheduled.equals("Yes") && isOutageWithinScheduledRange)) {
 									foundIncidentID = IncidentID;
