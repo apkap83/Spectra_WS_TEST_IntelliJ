@@ -28,6 +28,8 @@ public class Test_Outage_For_Massive_TV {
 
 	private final String OTT_OUTAGE_HIERARCHY = "Massive_TV_Outage->TV_Service=ALL_EON_Boxes";
 	private final String SATELLITE_OUTAGE_HIERARCHY = "Massive_TV_Outage->TV_Service=ALL_Satellite_Boxes";
+
+	public String TypeOfMassiveTVOutage;
 	Help_Func hf = new Help_Func();
 
 	DateFormat dateFormat = new SimpleDateFormat(hf.DATE_FORMAT);
@@ -165,6 +167,8 @@ public class Test_Outage_For_Massive_TV {
 						+ " | OutageID: " + OutageID + " | " + "IPTV" + " | "
 						+ OutageMsg + " | " + BackupEligible);
 
+				setTypeOfMassiveTVOutage("OTT");
+
 				// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
 				Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "OTT", Scheduled, OutageMsg, BackupEligible,
 						RequestID, systemID, "Nova");
@@ -248,6 +252,8 @@ public class Test_Outage_For_Massive_TV {
 					+ " | OutageID: " + OutageID + " | " + outageAffectedService + " | "
 					+ OutageMsg + " | " + BackupEligible);
 
+			setTypeOfMassiveTVOutage("DTH");
+
 			// Update asynchronously - Add Caller to Caller data table (Test_Caller_Data) with empty values for IncidentID, Affected Services & Scheduling
 			Update_CallerDataTable_ForMassiveOutage ucdt = new Update_CallerDataTable_ForMassiveOutage(dbs, s_dbs, TV_ID, IncidentID, "DTH", Scheduled, OutageMsg, BackupEligible,
 					RequestID, systemID, "Nova");
@@ -285,4 +291,12 @@ public class Test_Outage_For_Massive_TV {
 				"none", "none", "none", "NULL", "NULL", "NULL");
 	}
 
+
+	public String getTypeOfMassiveTVOutage() {
+		return TypeOfMassiveTVOutage;
+	}
+
+	public void setTypeOfMassiveTVOutage(String typeOfMassiveTVOutage) {
+		TypeOfMassiveTVOutage = typeOfMassiveTVOutage;
+	}
 }
