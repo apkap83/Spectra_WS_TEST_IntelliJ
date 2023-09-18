@@ -261,6 +261,8 @@ public class Test_CLIOutage
 		String[] queryForServices;
 		queryForServices = new String[] {"Voice", "Data", "IPTV"};
 
+		logger.info("SysID: " + systemID + " ReqID: " + RequestID + " - Checking CLI Outage CLI: " + CLIProvided + " | " + ServiceType);
+
 		// Split ServiceType
 		String delimiterCharacter = "\\|";
 		String[] ServiceTypeSplitted = ServiceType.split(delimiterCharacter);
