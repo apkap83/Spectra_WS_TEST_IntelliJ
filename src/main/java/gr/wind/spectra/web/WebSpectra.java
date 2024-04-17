@@ -75,7 +75,6 @@ public class WebSpectra implements InterfaceWebSpectra
 
 		MessageContext mc = null;
 		HttpServletRequest req = null;
-		//System.out.println("Client IP = " + req.getRemoteAddr());
 
 		if (conn == null)
 		{
@@ -1175,36 +1174,6 @@ public class WebSpectra implements InterfaceWebSpectra
 					// Insert Values in Database
 					try
 					{
-//						System.out.println("**** Backup Eligible = " + backupEligible);
-//						System.out.println("rootHierarchySelected: " + rootHierarchySelected);
-//						System.out.println("HierarchySelected: " + HierarchySelected);
-//						System.out.println("OpenReqID: " + RequestID);
-//						System.out.println("backupEligible: " + backupEligible);
-//						System.out.println("OutageID_String: " + RequestID);
-//						System.out.println("RequestTimestamp: " + RequestTimestamp);
-//						System.out.println("SystemID: " + SystemID);
-//						System.out.println("UserID: " + UserID);
-//						System.out.println("IncidentID: " + IncidentID);
-//						System.out.println("Scheduled: " + Scheduled);
-//						System.out.println("EndTime: " + EndTime);
-//						System.out.println("Duration: " + Duration);
-//						System.out.println("service: " + service);
-//						System.out.println("Impact: " + Impact);
-//						System.out.println("Priority: " + Priority);
-//						System.out.println("HierarchySelected: " + myHier.get(i).toString());
-//						System.out.println("locationsAffected: " + locationsAffected);
-//
-//						System.out.println("voiceCustomersAffected: " + voiceCustomersAffected);
-//						System.out.println("dataCustomersAffected: " + dataCustomersAffected);
-//						System.out.println("CLIsAffected: " + CLIsAffected);
-//						System.out.println("IPTVCustomersAffected: " + IPTVCustomersAffected);
-//						System.out.println("IncidentAffectedVoiceCustomers: " + Integer.toString(totalVoiceIncidentAffected));
-//						System.out.println("IncidentAffectedDataCustomers: " + Integer.toString(totalDataIncidentAffected));
-//						System.out.println("IncidentAffectedIPTVCustomers: " + Integer.toString(totalIPTVIncidentAffected));
-
-
-
-
 						s_dbOps.insertValuesInTable(tablePrefix + "Test_SubmittedIncidents",
 								new String[] { "OpenReqID", "DateTime", "WillBePublished", "BackupEligible", "OutageID",
 										"IncidentStatus", "RequestTimestamp", "SystemID", "UserID", "IncidentID",
@@ -1355,7 +1324,6 @@ public class WebSpectra implements InterfaceWebSpectra
 		s_DB_Operations s_dbs = null;
 		MessageContext mc = null;
 		HttpServletRequest req = null;
-		//System.out.println("Client IP = " + req.getRemoteAddr());
 
 		if (conn == null)
 		{
@@ -1792,7 +1760,6 @@ public class WebSpectra implements InterfaceWebSpectra
 							+ Arrays.toString(arrayOfValuesForUpdate));
 				} else
 				{
-					// System.out.println("Modifying: numOfRowsUpdated = " + numOfRowsUpdated);
 					pom = new ProductOfModify(RequestID, IncidentID, OutageID, "980", "Error modifying incident!");
 				}
 			} else
@@ -2449,9 +2416,10 @@ public class WebSpectra implements InterfaceWebSpectra
 								AffectedService.add("IPTV");
 							}
 
-							windPonla.setAffected_services(String.join("|", AffectedService));
 
-							return windPonla;
+							novaPonla.setAffected_services(String.join("|", AffectedService));
+
+							return novaPonla;
 						}
 
 					}
@@ -2460,18 +2428,21 @@ public class WebSpectra implements InterfaceWebSpectra
 							"CliValue", CLI);
 					// WIND Subscriber
 					if (foundInWind) {
-
-						String foundForCompany = null;
-						if (foundInWind) {
-							foundForCompany = "FOUND_FOR_WIND";
-						} else {
-							foundForCompany = "FOUND_FOR_WIND";
-						}
-
 						subscriberFoundForWind = true;
-						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, foundForCompany);
+						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "FOUND_FOR_WIND");
 						ponla = co.checkCLIOutage(RequestID, CLI, Service);
-						return ponla;
+
+//						String foundForCompany = null;
+//						if (foundInWind) {
+//							foundForCompany = "FOUND_FOR_WIND";
+//						} else {
+//							foundForCompany = "FOUND_FOR_WIND";
+//						}
+//
+//						subscriberFoundForWind = true;
+//						Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, foundForCompany);
+//						ponla = co.checkCLIOutage(RequestID, CLI, Service);
+//						return ponla;
 					}
 				} catch (Exception e) {
 					logger.error("NLU_Active: Problem while retrieving data from Wind DB !");
@@ -2480,29 +2451,30 @@ public class WebSpectra implements InterfaceWebSpectra
 
 
 			}
-				// Search if it is Nova subscriber
-				if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
-					try {
-						boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
-								"CliValue", CLI);
-						if (foundInNova) { // NOVA Subscriber
-							Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
+
+			// Search if it is Nova subscriber
+			if (novaDynDBOper != null  && novaStaticDBOper != null && subscriberFoundForWind == false) {
+				try {
+					boolean foundInNova = novaDynDBOper.checkIfStringExistsInSpecificColumn("Nova_Cli_Mappings",
+							"CliValue", CLI);
+					if (foundInNova) { // NOVA Subscriber
+						Test_CLIOutage co = new Test_CLIOutage(novaDynDBOper, novaStaticDBOper, RequestID, SystemID, "FOUND_FOR_NOVA");
+						ponla = co.checkCLIOutage(RequestID, CLI, Service);
+						return ponla;
+					} else {
+						// Cli Not Found then Assume WIND operations
+						if (dbs != null && s_dbs != null) {
+							subscriberFoundForWind = true; // Assume Wind for Reporting server request
+							Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
 							ponla = co.checkCLIOutage(RequestID, CLI, Service);
-							return ponla;
-						} else {
-							// Cli Not Found then Assume WIND operations
-							if (dbs != null && s_dbs != null) {
-								subscriberFoundForWind = true; // Assume Wind for Reporting server request
-								Test_CLIOutage co = new Test_CLIOutage(dbs, s_dbs, RequestID, SystemID, "NOT_FOUND_FOR_WIND_OR_NOVA");
-								ponla = co.checkCLIOutage(RequestID, CLI, Service);
-							}
 						}
 					}
-					catch (Exception e) {
-						logger.error("NLU_Active: Problem while retrieving data from Nova DB !");
-						e.printStackTrace();
-					}
 				}
+				catch (Exception e) {
+					logger.error("NLU_Active: Problem while retrieving data from Nova DB !");
+					e.printStackTrace();
+				}
+			}
 
 
 

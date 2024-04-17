@@ -161,6 +161,33 @@ public class Test_Outage_For_Massive_TV {
 
 				}
 
+				// If it is OPEN & Scheduled - Check if it is within range
+				if (Scheduled.equals("Yes")) {
+					// Get current date
+					LocalDateTime now = LocalDateTime.now();
+
+					// Convert StartTime date to LocalDateTime object
+					LocalDateTime StartTimeInLocalDateTime = Instant.ofEpochMilli(StartTime.getTime())
+							.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+					// Convert EndTime date to LocalDateTime object
+					LocalDateTime EndTimeInLocalDateTime = Instant.ofEpochMilli(EndTime.getTime())
+							.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+					// if Start time is after NOW and End Time is Before NOW then we have outage
+					if (now.isAfter(StartTimeInLocalDateTime) && now.isBefore(EndTimeInLocalDateTime)) {
+
+						logger.debug(
+								"ReqID: " + RequestID + " - Scheduled Incident: " + IncidentID + " is ongoing");
+					} else {
+						logger.debug(
+								"ReqID: " + RequestID + " - Scheduled Incident: " + IncidentID + " is NOT ongoing");
+
+						return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
+								"none", "none", "none", "NULL", "NULL", "NULL");
+					}
+				}
+
 				// Backup Eligible response should be "Y" or "N"
 				if (BackupEligible == null) {
 					BackupEligible = "N";
@@ -245,6 +272,33 @@ public class Test_Outage_For_Massive_TV {
 				String Priority = null;
 				String OutageMsg = null;
 				String BackupEligible = null;
+
+				// If it is OPEN & Scheduled - Check if it is within range
+				if (Scheduled.equals("Yes")) {
+					// Get current date
+					LocalDateTime now = LocalDateTime.now();
+
+					// Convert StartTime date to LocalDateTime object
+					LocalDateTime StartTimeInLocalDateTime = Instant.ofEpochMilli(StartTime.getTime())
+							.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+					// Convert EndTime date to LocalDateTime object
+					LocalDateTime EndTimeInLocalDateTime = Instant.ofEpochMilli(EndTime.getTime())
+							.atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+					// if Start time is after NOW and End Time is Before NOW then we have outage
+					if (now.isAfter(StartTimeInLocalDateTime) && now.isBefore(EndTimeInLocalDateTime)) {
+
+						logger.debug(
+								"ReqID: " + RequestID + " - Scheduled Incident: " + IncidentID + " is ongoing");
+					} else {
+						logger.debug(
+								"ReqID: " + RequestID + " - Scheduled Incident: " + IncidentID + " is NOT ongoing");
+
+						return new ProductOfNLUActive(this.requestID, TV_ID, "No", "none", "none", "none", "none",
+								"none", "none", "none", "NULL", "NULL", "NULL");
+					}
+				}
 
 				while (rs.next()) {
 					IncidentID = rs.getString("IncidentID");
